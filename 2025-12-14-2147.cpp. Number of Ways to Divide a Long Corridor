@@ -1,0 +1,196 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 14, 2024
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 2147. Number of Ways to Divide a Long Corridor
+📌 Link: https://leetcode.com/problems/number-of-ways-to-divide-a-long-corridor/
+🏷️ Difficulty: Hard
+🏆 Topics: Math, String, Dynamic Programming, Combinatorics
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given a corridor string with 'S' (seats) and 'P' (plants):
+- Divide the corridor into sections using dividers
+- Each section must have EXACTLY 2 seats
+- Count the number of valid ways to place dividers
+- Return answer modulo 10^9 + 7
+
+Constraints:
+- If total seats = 0 or odd → impossible → return 0
+- Dividers can only be placed between plants (P's)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Combinatorics + Counting Gaps
+
+Key Insight:
+- After every pair of seats (2nd, 4th, 6th seat...), we MUST place a divider
+- The divider can be placed in any of the plant positions between pairs
+- If there are k plants between two pairs → (k + 1) ways to place divider
+- Multiply all possibilities together
+
+Algorithm:
+1️⃣ Count total seats → if 0 or odd, return 0 (impossible)
+2️⃣ Track seat count as we iterate
+3️⃣ After completing a pair (seat count becomes even):
+   • Count plants until next seat appears
+   • These plants form a "gap" where divider can be placed
+4️⃣ For each gap with k plants → multiply answer by (k + 1)
+5️⃣ Return result modulo 10^9 + 7
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input:  corridor = "SSPPSPS"
+
+Step 1: Count total seats
+        S S P P S P S
+        ↓ ↓     ↓   ↓
+        4 seats total → even ✅ (valid)
+
+Step 2: Process character by character
+        S S | P P | S P S
+        ↑ ↑   ↑ ↑   ↑   ↑
+        pair1 gap   pair2
+
+Step 3: Find gaps between pairs
+        After 1st pair (S S): next is P P
+        • 2 plants before next seat
+        • Ways to place divider = 2 + 1 = 3
+        
+        After 2nd pair (S): next is P S
+        • 1 plant before next seat  
+        • Ways = 1 + 1 = 2
+
+Step 4: Multiply possibilities
+        Total ways = 3 × 2 = 6
+
+Possible divisions:
+1. SS | PPSPS
+2. SS | P PSPS
+3. SS | PP SPS
+... (6 total ways)
+
+Output: 3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity:  O(n)
+   └─ Single pass through the corridor string
+   └─ Each character processed once
+   
+💾 Space Complexity: O(1)
+   └─ Only using constant extra variables
+   └─ No additional data structures needed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    int numberOfWays(string corridor) {
+        int n = corridor.length();
+        const int MOD = 1e9 + 7;
+        
+        // 📊 Step 1: Count total seats for validation
+        int sCount = 0;  // Total seat count
+        for(char c : corridor) {
+            if(c == 'S') sCount++;
+        }
+        
+        // ❌ Edge cases: impossible scenarios
+        // No seats OR odd number of seats → can't divide into pairs
+        if(sCount == 0 || sCount % 2 != 0) return 0;
+        
+        // 🎯 Step 2: Count ways to place dividers between pairs
+        sCount = 0;        // Reset to track current seat count
+        int pCount = 0;    // Count plants in current gap
+        long long ans = 1; // Result (using multiplication principle)
+        
+        for(char c : corridor) {
+            if(c == 'S') {
+                sCount++;
+                
+                // 🔑 Key moment: Just completed a pair and starting new one
+                // This happens when sCount > 2 and becomes odd (3rd, 5th, 7th seat...)
+                if(sCount > 2 && sCount % 2 == 1) {
+                    // Previous gap had 'pCount' plants
+                    // Can place divider in (pCount + 1) positions
+                    ans = (ans * (pCount + 1)) % MOD;
+                    pCount = 0;  // Reset for next gap
+                }
+            }
+            else {  // c == 'P'
+                // 🌿 Count plants ONLY when we have a complete pair
+                // and waiting for next pair to start
+                if(sCount >= 2 && sCount % 2 == 0) {
+                    pCount++;
+                }
+            }
+        }
+        
+        return ans;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Core Idea: Multiplication principle of counting
+   • Independent choices multiply together
+   • Each gap provides independent placement options
+
+🔑 Critical Observation:
+   • Dividers MUST go between pairs (after 2nd, 4th, 6th seat...)
+   • Can't split a pair or have divider before first pair
+
+⚠️ Edge Cases Handled:
+   • Empty corridor or no seats → 0
+   • Odd number of seats → impossible → 0
+   • Single pair → 1 way (no dividers needed)
+
+🎯 Why This Works:
+   • After seat #2k, we have a complete k-th pair
+   • Before seat #(2k+1), there's a gap of plants
+   • Each plant position (plus one) is a valid divider spot
+   • Choices are independent → multiply them
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 State Transitions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Seat Count State Machine:
+
+sCount = 0 → Looking for first pair
+sCount = 1 → Found 1st seat of pair
+sCount = 2 → Completed 1st pair ✅ Start counting plants
+sCount = 3 → Found 1st seat of 2nd pair → Calculate ways, reset pCount
+sCount = 4 → Completed 2nd pair ✅ Start counting plants
+...and so on
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Example Trace
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: "SSPPSPS"
+
+Position: S    S    P    P    S    P    S
+sCount:   1    2    2    2    3    4    5
+pCount:   -    -    1    2    →    1    →
+Action:   -    -    +    +   calc  +   calc
+ans:      1    1    1    1    3    3    6
+
+Final: 6 ways
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
