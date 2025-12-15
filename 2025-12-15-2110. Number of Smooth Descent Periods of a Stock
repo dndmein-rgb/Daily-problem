@@ -1,0 +1,206 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 16, 2024
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 2110. Number of Smooth Descent Periods of a Stock
+📌 Link: https://leetcode.com/problems/number-of-smooth-descent-periods-of-a-stock/
+🏷️ Difficulty: Medium
+🏆 Topics: Array, Math, Dynamic Programming
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A smooth descent period is a subarray where each price is exactly 1 less than 
+the previous price (strictly decreasing by 1).
+
+Examples of smooth descent periods:
+- [5, 4, 3, 2] ✅ (each differs by exactly -1)
+- [5, 4] ✅
+- [5] ✅ (single element always counts)
+- [5, 3] ❌ (difference is -2, not -1)
+- [5, 5] ❌ (no change)
+
+Count ALL possible smooth descent subarrays in the given prices array.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Sliding Window + Combinatorics
+
+Key Insight:
+If we have a consecutive smooth descent of length L, the number of subarrays
+is: L × (L + 1) / 2
+
+This is because:
+- 1 element: L subarrays
+- 2 elements: (L-1) subarrays  
+- 3 elements: (L-2) subarrays
+- ...
+- L elements: 1 subarray
+Total = L + (L-1) + (L-2) + ... + 1 = L(L+1)/2
+
+Algorithm:
+1️⃣ Track length of current smooth descent period
+2️⃣ When smooth descent breaks:
+   • Add L(L+1)/2 to answer for that segment
+   • Reset length to 1
+3️⃣ Continue until end of array
+4️⃣ Don't forget to add the last segment!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input:  prices = [3, 2, 1, 4]
+
+Step-by-step:
+  Index:  0  1  2  3
+  Price:  3  2  1  4
+          ↓  ↓  ↓  ↓
+  
+  i=1: 2 = 3-1 ✅ → len = 2
+  i=2: 1 = 2-1 ✅ → len = 3
+  i=3: 4 ≠ 1-1 ❌ → Break! Calculate and reset
+  
+  Segment [3,2,1] has length 3:
+  Subarrays count = 3×4/2 = 6
+  
+  Subarrays:
+  - [3]     ✅
+  - [2]     ✅
+  - [1]     ✅
+  - [3,2]   ✅
+  - [2,1]   ✅
+  - [3,2,1] ✅
+  
+  Last segment [4] has length 1:
+  Count = 1×2/2 = 1
+  
+  Subarray:
+  - [4]     ✅
+
+Total: 6 + 1 = 7
+
+Output: 7
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity:  O(n)
+   └─ Single pass through the array
+   └─ Each element processed exactly once
+   
+💾 Space Complexity: O(1)
+   └─ Only using two variables (ans, len)
+   └─ No additional data structures
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    long long getDescentPeriods(vector<int>& prices) {
+        int n = prices.size();
+        long long ans = 0;   // Total count of smooth descent periods
+        long long len = 1;   // Current consecutive descent length
+        
+        // 🔍 Iterate through prices starting from index 1
+        for (int i = 1; i < n; i++) {
+            // ✅ Check if current price continues the smooth descent
+            // (current price = previous price - 1)
+            if (prices[i] == prices[i - 1] - 1) {
+                len++;  // Extend current descent period
+            }
+            else {
+                // ❌ Descent breaks! Calculate subarrays for current segment
+                // Formula: For length L, number of subarrays = L(L+1)/2
+                ans += len * (len + 1) / 2;
+                len = 1;  // Reset for new segment
+            }
+        }
+        
+        // 🎯 Don't forget the last segment!
+        // After loop ends, we still have one segment to count
+        ans += len * (len + 1) / 2;
+        
+        return ans;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Core Formula: Number of subarrays in array of length L = L(L+1)/2
+   This is the sum of first L natural numbers (triangular number)
+
+🔑 Pattern Recognition: This is a "grouping consecutive elements" problem
+   Similar patterns appear in:
+   - Longest consecutive sequence
+   - Count increasing/decreasing subsequences
+   - Stock span problems
+
+⚠️ Edge Case: Don't forget to add the last segment after the loop!
+   This is a common mistake in these types of problems
+
+🎯 Why Combinatorics Works:
+   For array [a, b, c] (length 3):
+   - 1-element subarrays: [a], [b], [c] → 3 subarrays
+   - 2-element subarrays: [a,b], [b,c] → 2 subarrays
+   - 3-element subarrays: [a,b,c] → 1 subarray
+   Total = 3 + 2 + 1 = 6 = 3×4/2 ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Detailed Example
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: [5, 4, 3, 2, 1]
+
+This is ONE continuous smooth descent of length 5.
+
+All subarrays:
+Length 1: [5], [4], [3], [2], [1]           → 5 subarrays
+Length 2: [5,4], [4,3], [3,2], [2,1]        → 4 subarrays
+Length 3: [5,4,3], [4,3,2], [3,2,1]         → 3 subarrays
+Length 4: [5,4,3,2], [4,3,2,1]              → 2 subarrays
+Length 5: [5,4,3,2,1]                       → 1 subarray
+
+Total = 5 + 4 + 3 + 2 + 1 = 15
+Using formula: 5 × 6 / 2 = 15 ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Alternative Approaches
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Approach 1 (Current): Count segments and use formula
+✅ Time: O(n), Space: O(1)
+
+Approach 2: DP - Count ending at each position
+- dp[i] = number of periods ending at position i
+- If smooth descent continues: dp[i] = dp[i-1] + 1
+- Otherwise: dp[i] = 1
+- Sum all dp values
+✅ Time: O(n), Space: O(n) or O(1) if optimized
+
+Approach 3: Brute Force - Check all subarrays
+❌ Time: O(n³), Space: O(1) - Too slow!
+
+Current approach is optimal! 🎯
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Related Problems
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Similar pattern problems:
+- Count Subarrays With Fixed Bounds
+- Number of Arithmetic Slices
+- Longest Consecutive Sequence
+- Maximum Subarray (uses similar segment thinking)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
