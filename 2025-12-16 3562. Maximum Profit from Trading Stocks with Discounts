@@ -1,0 +1,270 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 16, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 3562. Maximum Profit from Trading Stocks with Discounts
+📌 Link: https://leetcode.com/problems/maximum-profit-from-trading-stocks-with-discounts/
+🏷️ Difficulty: Hard
+🏆 Topics: Dynamic Programming, Tree DP, Knapsack
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- n stocks in a tree hierarchy (parent-child relationships)
+- Each stock has present price and future price
+- Budget B to buy stocks
+- Special rule: If you buy parent stock, child gets 50% discount
+
+Goal: Maximize profit (future_price - present_price) within budget
+
+Constraints:
+- Can buy any subset of stocks
+- Child discount only applies if parent is bought
+- Total cost must not exceed budget
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Tree DP + Knapsack Variant
+
+Key Insights:
+1️⃣ This is a tree structure (parent-child relationships)
+2️⃣ Each node has two states: parent bought (discount) or not
+3️⃣ Need to track budget usage (knapsack dimension)
+4️⃣ For each subtree, merge solutions from children
+
+Algorithm:
+1️⃣ Build tree from hierarchy edges
+2️⃣ DFS from root, computing DP for each node
+3️⃣ For each node, track:
+   - dp[node][parentBought][budgetUsed] = max profit
+4️⃣ Two branches at each node:
+   - Skip: Don't buy this stock (merge children with no discount)
+   - Buy: Buy this stock (merge children with discount)
+5️⃣ Merge solutions using knapsack-like combination
+6️⃣ Return maximum profit at root within budget
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: 
+  n = 3
+  present = [10, 8, 6]
+  future = [15, 12, 10]
+  hierarchy = [[1,2], [1,3]]  // Stock 1 is parent of 2 and 3
+  budget = 20
+
+Tree Structure:
+        Stock 1 (10 → 15, profit = 5)
+         /    \
+    Stock 2    Stock 3
+    (8→12)     (6→10)
+    profit=4   profit=4
+
+Scenarios:
+
+Scenario 1: Buy only Stock 1
+- Cost: 10
+- Profit: 5
+- Total: 5
+
+Scenario 2: Buy Stock 1 and 2
+- Stock 1: 10
+- Stock 2: 8/2 = 4 (50% discount!)
+- Cost: 14
+- Profit: 5 + 4 = 9
+
+Scenario 3: Buy all three
+- Stock 1: 10
+- Stock 2: 4 (discount)
+- Stock 3: 3 (discount)
+- Cost: 17
+- Profit: 5 + 4 + 4 = 13 ✅ Best!
+
+Output: 13
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity:  O(n × B²)
+   └─ n nodes in tree
+   └─ For each node: merge operation is O(B²)
+   └─ Total: O(n × B²)
+   
+💾 Space Complexity: O(n × B)
+   └─ DP table: n nodes × 2 states × B budget
+   └─ Call stack: O(n) for DFS
+   └─ Total: O(n × B)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    int B;  // Global budget for easy access
+    
+    // 🔀 Merge two DP arrays (like merging two knapsack solutions)
+    vector<int> merge(const vector<int>& dp1, const vector<int>& dp2) {
+        vector<int> next(B + 1, -1e9);  // Initialize with very negative values
+        
+        // Try all combinations of budget splits
+        for (int i = 0; i <= B; i++) {
+            if (dp1[i] < 0) continue;  // Invalid state
+            
+            for (int j = 0; i + j <= B; j++) {
+                if (dp2[j] < 0) continue;  // Invalid state
+                
+                // Combine: spend i on first subtree, j on second
+                next[i + j] = max(next[i + j], dp1[i] + dp2[j]);
+            }
+        }
+        return next;
+    }
+    
+    // 🌳 DFS to compute DP values for each node
+    void dfs(int u, const vector<vector<int>>& tree, 
+             const vector<int>& present, const vector<int>& future, 
+             vector<vector<vector<int>>>& dp) {
+        
+        // Two branches: skip this node or buy this node
+        vector<int> skipBranch(B + 1, -1e9);   // Don't buy current stock
+        vector<int> buyBranch(B + 1, -1e9);    // Buy current stock
+        
+        // Base case: spending 0 gives 0 profit
+        skipBranch[0] = 0;
+        buyBranch[0] = 0;
+        
+        // 🔄 Process all children
+        for (int v : tree[u]) {
+            dfs(v, tree, present, future, dp);
+            
+            // Merge child's solution (child gets NO discount)
+            skipBranch = merge(skipBranch, dp[v][0]);
+            
+            // Merge child's solution (child gets discount)
+            buyBranch = merge(buyBranch, dp[v][1]);
+        }
+        
+        // 📊 Compute DP for both parent states
+        for (int parentBought = 0; parentBought <= 1; parentBought++) {
+            // Calculate price based on whether parent was bought
+            int price = parentBought ? present[u] / 2 : present[u];
+            int profit = future[u] - price;
+            
+            // Start with "skip this stock" option
+            vector<int> currentDP = skipBranch;
+            
+            // Add "buy this stock" option if affordable
+            if (price <= B) {
+                for (int b = 0; b <= B - price; b++) {
+                    if (buyBranch[b] > -1e9) {
+                        // Buy current stock + use children with discount
+                        currentDP[b + price] = max(currentDP[b + price], 
+                                                   buyBranch[b] + profit);
+                    }
+                }
+            }
+            
+            // Store result for this node and parent state
+            dp[u][parentBought] = currentDP;
+        }
+    }
+    
+    // 🎯 Main function
+    int maxProfit(int n, vector<int>& present, vector<int>& future, 
+                  vector<vector<int>>& hierarchy, int budget) {
+        B = budget;
+        
+        // 🏗️ Build tree from hierarchy
+        vector<vector<int>> tree(n);
+        for (auto& edge : hierarchy) {
+            tree[edge[0] - 1].push_back(edge[1] - 1);  // Convert to 0-indexed
+        }
+        
+        // 📊 DP table: dp[node][parentBought] = array of profits by budget
+        vector<vector<vector<int>>> dp(n, vector<vector<int>>(2));
+        
+        // 🌳 Start DFS from root (node 0)
+        dfs(0, tree, present, future, dp);
+        
+        // 🔍 Find maximum profit at root (parent not bought = 0)
+        int ans = 0;
+        for (int b = 0; b <= B; b++) {
+            ans = max(ans, dp[0][0][b]);
+        }
+        
+        return ans;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Core Pattern: Tree DP + Knapsack
+   - Tree DP: Process tree bottom-up (DFS post-order)
+   - Knapsack: Track budget usage dimension
+
+🔑 Discount Mechanism:
+   - Parent not bought → child pays full price
+   - Parent bought → child pays half price
+   - This creates two separate DP states per node
+
+⚠️ Critical Optimization: Merge Function
+   - Instead of trying all subsets, merge child solutions
+   - Similar to combining two knapsacks
+   - Avoids exponential blowup
+
+🎯 State Definition:
+   dp[node][parentBought][budgetUsed] = max profit achievable
+   - node: which stock we're at
+   - parentBought: 0 or 1 (affects discount)
+   - budgetUsed: how much money spent so far
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 DP State Transitions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For each node u:
+
+Option 1: Skip this stock
+  → Use skipBranch (children get no discount)
+  → Cost: 0
+  → Profit: 0 (from this node)
+
+Option 2: Buy this stock
+  → Use buyBranch (children get discount)
+  → Cost: present[u] (or present[u]/2 if parent bought)
+  → Profit: future[u] - cost
+
+Combine with children's solutions using merge()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Why This Approach Works
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Tree structure ensures no cycles (clean recursion)
+2. Two states capture discount dependency
+3. Merge function combines independent subtrees optimally
+4. Knapsack dimension tracks budget constraint
+5. Bottom-up processing (DFS) ensures children computed first
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Related Problems
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Similar patterns:
+- House Robber III (tree DP with states)
+- Binary Tree Maximum Path Sum
+- Knapsack variants
+- Stock trading with transaction fees
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
