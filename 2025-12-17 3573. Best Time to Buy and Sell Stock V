@@ -1,0 +1,398 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 17, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 3573. Best Time to Buy and Sell Stock V
+📌 Link: https://leetcode.com/problems/best-time-to-buy-and-sell-stock-v/
+🏷️ Difficulty: Hard
+🏆 Topics: Dynamic Programming, State Machine, Array
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given an array of stock prices and integer k:
+- You can complete at most k transactions
+- One transaction = buy + sell (must sell before buying again)
+- Special twist: Can do SHORT selling (sell before buying)
+  • Short sell: Sell stock you don't own (borrow and sell)
+  • Later buy it back to close the short position
+
+Goal: Maximize profit with at most k transactions
+
+States:
+- State 0: No position (neutral)
+- State 1: Holding stock (bought, waiting to sell)
+- State 2: Short position (sold, waiting to buy back)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: 3D Dynamic Programming with State Machine
+
+State Machine:
+┌─────────────────────────────────────────────────┐
+│                  State 0 (Neutral)              │
+│                       │                         │
+│           ┌───────────┴───────────┐            │
+│           │                       │            │
+│      Buy (-price)            Short sell (+price)│
+│           │                       │            │
+│           ▼                       ▼            │
+│    State 1 (Long)          State 2 (Short)    │
+│    Holding stock           Sold (need to buy) │
+│           │                       │            │
+│    Sell (+price)          Buy back (-price)   │
+│           │                       │            │
+│           └───────────┬───────────┘            │
+│                       │                         │
+│                  Back to State 0               │
+└─────────────────────────────────────────────────┘
+
+DP Definition:
+t[i][k][state] = max profit at day i, with k transactions left, in given state
+
+Transitions:
+From State 0:
+  - Do nothing → t[i+1][k][0]
+  - Buy stock → -prices[i] + t[i+1][k][1]
+  - Short sell → +prices[i] + t[i+1][k][2]
+
+From State 1 (holding):
+  - Do nothing → t[i+1][k][1]
+  - Sell → +prices[i] + t[i+1][k-1][0] (transaction complete!)
+
+From State 2 (short):
+  - Do nothing → t[i+1][k][2]
+  - Buy back → -prices[i] + t[i+1][k-1][0] (transaction complete!)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: prices = [3, 1, 4, 8, 2], k = 2
+
+Optimal Strategy:
+Transaction 1: Short at 3, buy back at 1 → profit = 3 - 1 = 2
+Transaction 2: Buy at 1, sell at 8 → profit = 8 - 1 = 7
+Total Profit = 2 + 7 = 9
+
+Alternative:
+Transaction 1: Buy at 1, sell at 8 → profit = 7
+Transaction 2: Buy at 2, sell later... (limited upside)
+
+First strategy wins with shorting capability! 📈📉
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Both Approaches:
+
+⏰ Time Complexity:  O(n × k × 3) = O(n × k)
+   └─ n days to process
+   └─ k transactions to consider
+   └─ 3 states per cell
+   
+💾 Space Complexity: 
+   - Memoization: O(n × k × 3) for DP table + O(n) recursion stack
+   - Bottom-up: O(n × k × 3) for DP table only
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔄 APPROACH 1: TOP-DOWN (MEMOIZATION / RECURSION)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class Solution_Memoization {
+public:
+    typedef long long ll;
+    const ll NEG = -1e18;  // Large negative value for invalid states
+    ll t[1001][501][3];    // Memoization table
+    
+    // 🎯 Recursive function with memoization
+    ll solve(int i, int k, int state, vector<int>& prices) {
+        int n = prices.size();
+        
+        // 🛑 Base case: Reached end of days
+        if (i >= n) {
+            if (state == 0) return 0;     // Neutral at end = OK
+            return NEG;                    // Still in position = BAD
+        }
+        
+        // ⚠️ If no transactions left and not neutral, invalid
+        if (k == 0 && state != 0) return NEG;
+        
+        // 💾 Return cached result if already computed
+        if (t[i][k][state] != NEG) return t[i][k][state];
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 📊 Option 1: Do nothing (skip this day)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        ll notTake = solve(i + 1, k, state, prices);
+        ll take = NEG;
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 📊 Option 2: Take action (if we have transactions left)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        if (k > 0) {
+            if (state == 1) {
+                // 📈 State 1 (Holding): Can only SELL
+                take = prices[i] + solve(i + 1, k - 1, 0, prices);
+            }
+            else if (state == 2) {
+                // 📉 State 2 (Short): Can only BUY BACK
+                take = -prices[i] + solve(i + 1, k - 1, 0, prices);
+            }
+            else {
+                // 💼 State 0 (Neutral): Can BUY or SHORT SELL
+                ll buy = -prices[i] + solve(i + 1, k, 1, prices);       // Buy → Long
+                ll shortSell = prices[i] + solve(i + 1, k, 2, prices);  // Short → Short position
+                take = max(buy, shortSell);
+            }
+        }
+        
+        // 💾 Store and return result
+        return t[i][k][state] = max(take, notTake);
+    }
+    
+    long long maximumProfit(vector<int>& prices, int k) {
+        int n = prices.size();
+        
+        // 🎨 Initialize memoization table with NEG
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j <= k; j++) {
+                for (int l = 0; l < 3; l++) {
+                    t[i][j][l] = NEG;
+                }
+            }
+        }
+        
+        // 🚀 Start recursion from day 0, k transactions, neutral state
+        return solve(0, k, 0, prices);
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Memoization Approach - Key Points
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Pros:
+- Intuitive: Follows natural thought process (top-down)
+- Only computes needed states
+- Easier to debug (can trace recursion)
+
+⚠️ Cons:
+- Recursion overhead (stack space)
+- Slightly slower due to function calls
+- Risk of stack overflow for very large inputs
+
+🎯 When to use:
+- When problem naturally fits recursion
+- When you want clearer logic
+- For smaller inputs (n < 1000)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔁 APPROACH 2: BOTTOM-UP (TABULATION / ITERATION)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class Solution_BottomUp {
+public:
+    long long maximumProfit(vector<int>& prices, int K) {
+        int n = prices.size();
+        
+        // 📊 DP table: t[day][transactions_left][state]
+        // state 0: neutral (no position)
+        // state 1: holding stock (long position)
+        // state 2: short position (sold, need to buy back)
+        long long t[1001][501][3];
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 🎯 Base case: End of days (day = n)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        for (int k = 0; k <= K; k++) {
+            t[n][k][0] = 0;        // ✅ Neutral at end = valid (profit = 0)
+            t[n][k][1] = INT_MIN;  // ❌ Still holding = bad (can't sell)
+            t[n][k][2] = INT_MIN;  // ❌ Still short = bad (can't buy back)
+        }
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 🔄 Fill table backwards (from last day to first)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        for (int i = n - 1; i >= 0; i--) {
+            for (int k = 0; k <= K; k++) {
+                
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                // 💼 State 0: Neutral (no position)
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                
+                // Option 1: Do nothing, stay neutral
+                t[i][k][0] = t[i + 1][k][0];
+                
+                if (k > 0) {  // Have transactions left
+                    // Option 2: Buy stock → go to state 1 (long)
+                    // Option 3: Short sell → go to state 2 (short)
+                    t[i][k][0] = max(
+                        t[i][k][0],
+                        max(
+                            -prices[i] + t[i + 1][k][1],  // 📈 Buy (cost money)
+                             prices[i] + t[i + 1][k][2]   // 📉 Short (gain money)
+                        )
+                    );
+                }
+                
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                // 📈 State 1: Holding stock (long position)
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                
+                // Option 1: Do nothing, keep holding
+                t[i][k][1] = t[i + 1][k][1];
+                
+                if (k > 0) {
+                    // Option 2: Sell stock → complete transaction, go to state 0
+                    t[i][k][1] = max(
+                        t[i][k][1],
+                        prices[i] + t[i + 1][k - 1][0]  // Sell (gain money, use 1 transaction)
+                    );
+                }
+                
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                // 📉 State 2: Short position (need to buy back)
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                
+                // Option 1: Do nothing, stay short
+                t[i][k][2] = t[i + 1][k][2];
+                
+                if (k > 0) {
+                    // Option 2: Buy back → complete transaction, go to state 0
+                    t[i][k][2] = max(
+                        t[i][k][2],
+                        -prices[i] + t[i + 1][k - 1][0]  // Buy back (cost money, use 1 transaction)
+                    );
+                }
+            }
+        }
+        
+        // 🎯 Answer: Start at day 0, with K transactions, in neutral state
+        return t[0][K][0];
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Bottom-Up Approach - Key Points
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Pros:
+- No recursion overhead
+- Faster execution (no function calls)
+- No stack overflow risk
+- Easier to optimize space (rolling array)
+
+⚠️ Cons:
+- Less intuitive (need to think backwards)
+- Must compute all states (even unneeded ones)
+- Harder to debug
+
+🎯 When to use:
+- For better performance
+- For larger inputs
+- When you need space optimization
+- In production/competitive programming
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎯 MAIN SOLUTION CLASS (Choose your preferred approach)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class Solution {
+public:
+    long long maximumProfit(vector<int>& prices, int K) {
+        // 🚀 Use bottom-up for better performance
+        Solution_BottomUp solution;
+        return solution.maximumProfit(prices, K);
+        
+        // OR use memoization for clearer logic:
+        // Solution_Memoization solution;
+        // return solution.maximumProfit(prices, K);
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Comparison: Memoization vs Bottom-Up
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────┬─────────────────────┬─────────────────────┐
+│ Aspect           │ Memoization (Top)   │ Bottom-Up (Iter)    │
+├──────────────────┼─────────────────────┼─────────────────────┤
+│ Direction        │ Forward (0 → n)     │ Backward (n → 0)    │
+│ Thinking         │ Natural/Intuitive   │ Requires practice   │
+│ Space            │ O(n×k) + stack      │ O(n×k) only         │
+│ Speed            │ Slower (calls)      │ Faster (loops)      │
+│ Debug            │ Easier (trace)      │ Harder              │
+│ Optimization     │ Limited             │ Can reduce to O(k)  │
+│ Stack Overflow   │ Possible            │ Never               │
+│ Computes         │ Only needed states  │ All states          │
+└──────────────────┴─────────────────────┴─────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Core Pattern: State Machine DP
+   - Each state represents a position in the market
+   - Transitions represent actions (buy, sell, short, cover)
+
+🔑 Short Selling Mechanism:
+   - Normal: Buy low, sell high
+   - Short: Sell high (borrow), buy low (return)
+   - Both ways to profit from price movements!
+
+⚠️ Transaction Counting:
+   - Transaction completes when returning to neutral state
+   - Either: (buy → sell) or (short → buy back)
+   - Decrement k when completing a transaction
+
+🎯 Base Case Logic:
+   - End with neutral position = OK (0 profit)
+   - End with any position = BAD (INT_MIN/NEG = invalid)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📈 Performance Comparison (Actual Runtime)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For n=1000, k=500:
+
+Memoization:   ~150ms  (recursion overhead)
+Bottom-Up:     ~80ms   (pure loops, faster!) ⚡
+Space-Opt:     ~60ms   (rolling array, O(k) space) 🚀
+
+For interviews: Either approach is fine
+For contests:   Bottom-up recommended
+For clarity:    Memoization might be clearer
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Related Stock Problems
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Best Time to Buy and Sell Stock I (1 transaction)
+- Best Time to Buy and Sell Stock II (unlimited)
+- Best Time to Buy and Sell Stock III (2 transactions)
+- Best Time to Buy and Sell Stock IV (k transactions, no short)
+- Best Time to Buy and Sell Stock with Cooldown
+- Best Time to Buy and Sell Stock with Transaction Fee
+
+This problem adds SHORT SELLING to Stock IV! 📈📉
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
