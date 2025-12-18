@@ -1,0 +1,169 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: ———
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 3652. Best Time to Buy and Sell Stock using Strategy
+📌 Platform: LeetCode
+🏷️ Difficulty: Hard
+🏆 Topics: Sliding Window, Prefix Sum, Greedy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You are given:
+
+* An array `prices` where `prices[i]` is the stock price on day `i`
+* An array `strategy` of the same length where:
+
+  * `strategy[i] = -1` → you buy on day `i`
+  * `strategy[i] = 0`  → you do nothing
+  * `strategy[i] = 1`  → you sell on day `i`
+* An integer `k` representing the length of a **single contiguous modification window**
+
+Inside this window:
+
+* You are allowed to **override the strategy**
+* The first `k/2` days are forced to BUY
+* The next `k/2` days are forced to SELL
+
+Goal:
+
+* Apply the modification window **at most once**
+* Maximize the total profit
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Core Idea
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This is a **baseline + best window gain** problem.
+
+Key observations:
+
+* The original strategy already defines a fixed profit
+* Applying the modification window replaces the original profit on that segment
+* We only care about the **extra gain** obtained by replacing it
+
+So the plan is:
+
+1. Compute the original profit from the given strategy
+2. Slide a window of length `k`
+3. For each window, compute:
+
+   * Original profit inside the window
+   * Modified profit inside the window
+4. Track the maximum extra gain
+5. Add it to the baseline profit
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 Window Profit Breakdown
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+g
+Let:
+
+* `profit[i] = prices[i] * strategy[i]`
+
+For a window `[i, j]` of size `k`:
+
+Original window profit:
+
+* Sum of `profit[i..j]`
+
+Modified window profit:
+
+* For the first `k/2` days → BUY → `+prices`
+* For the next `k/2` days → SELL → `+prices`
+
+So the **gain** of modifying this window is:
+
+```
+modifiedWindowProfit − originalWindowProfit
+```
+
+We want the maximum such gain.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚙️ Implementation (Sliding Window)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+typedef long long ll;
+
+```
+long long maxProfit(vector<int>& prices, vector<int>& strategy, int k) {
+    int n = prices.size();
+    vector<ll> profit(n);
+    ll actualProfit = 0;
+
+    // Baseline profit from the original strategy
+    for (int i = 0; i < n; i++) {
+        profit[i] = 1LL * prices[i] * strategy[i];
+        actualProfit += profit[i];
+    }
+
+    int i = 0;
+    ll gain = 0;
+    ll originalWindowProfit = 0;
+    ll modifiedWindowProfit = 0;
+
+    // Sliding window of size k
+    for (int j = 0; j < n; j++) {
+        originalWindowProfit += profit[j];
+
+        // Modified strategy contributes prices[j]
+        // only after the first k/2 positions
+        if (j - i + 1 > k / 2) {
+            modifiedWindowProfit += prices[j];
+        }
+
+        // Shrink window if it exceeds size k
+        if (j - i + 1 > k) {
+            originalWindowProfit -= profit[i];
+            modifiedWindowProfit -= prices[i + k / 2];
+            i++;
+        }
+
+        // Valid window of exact size k
+        if (j - i + 1 == k) {
+            gain = max(gain, modifiedWindowProfit - originalWindowProfit);
+        }
+    }
+
+    return actualProfit + gain;
+}
+```
+
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Let `n` be the number of days.
+
+Time Complexity:
+
+* O(n)
+
+  * Single pass sliding window
+
+Space Complexity:
+
+* O(n) for the profit array
+* O(1) extra space for window variables
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+* This is NOT DP. Sliding window is enough.
+* Treat the modification as a delta over the original strategy.
+* Window math must be precise; off-by-one errors break everything.
+* The split at `k/2` is the critical constraint.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
