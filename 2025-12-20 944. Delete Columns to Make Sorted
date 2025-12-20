@@ -1,0 +1,246 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 20, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 944. Delete Columns to Make Sorted
+📌 Link: https://leetcode.com/problems/delete-columns-to-make-sorted/
+🏷️ Difficulty: Easy
+🏆 Topics: Array, String
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given an array of strings (all same length):
+- Each string represents a row
+- Characters in the same column position form a column
+
+Goal: Find minimum number of columns that are NOT sorted in ascending order
+
+A column is sorted if: strs[0][i] ≤ strs[1][i] ≤ strs[2][i] ≤ ...
+
+Example:
+  strs = ["cba", "daf", "ghi"]
+  
+  Visualize as grid:
+    c b a  ← Row 0
+    d a f  ← Row 1
+    g h i  ← Row 2
+    ↓ ↓ ↓
+    Col0: c,d,g → sorted ✅ (c < d < g)
+    Col1: b,a,h → NOT sorted ❌ (b > a)
+    Col2: a,f,i → sorted ✅ (a < f < i)
+  
+  Answer: 1 (delete column 1)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Column-by-Column Validation
+
+Algorithm:
+1️⃣ Iterate through each column (0 to m-1)
+2️⃣ For each column, check if sorted:
+   - Compare each character with the previous row's character
+   - If any character is less than previous → column is unsorted
+3️⃣ Count unsorted columns
+4️⃣ Return count
+
+Visual Process:
+  For each column i:
+    Check: strs[0][i] ≤ strs[1][i] ≤ strs[2][i] ≤ ... ≤ strs[n-1][i]
+    If any violation found → count++
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: strs = ["cba", "daf", "ghi"]
+
+Step 1: Check Column 0 (index i=0)
+  strs[0][0] = 'c'
+  strs[1][0] = 'd'  → 'd' >= 'c' ✅
+  strs[2][0] = 'g'  → 'g' >= 'd' ✅
+  Result: Sorted! count = 0
+
+Step 2: Check Column 1 (index i=1)
+  strs[0][1] = 'b'
+  strs[1][1] = 'a'  → 'a' < 'b' ❌ VIOLATION!
+  Result: Not sorted! count = 1, break
+
+Step 3: Check Column 2 (index i=2)
+  strs[0][2] = 'a'
+  strs[1][2] = 'f'  → 'f' >= 'a' ✅
+  strs[2][2] = 'i'  → 'i' >= 'f' ✅
+  Result: Sorted! count = 1
+
+Output: 1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity:  O(n × m)
+   └─ n = number of strings (rows)
+   └─ m = length of each string (columns)
+   └─ We check each position once (with early break optimization)
+   
+💾 Space Complexity: O(1)
+   └─ Only using constant extra space (count variable)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    int minDeletionSize(vector<string>& strs) {
+        int n = strs.size();      // Number of rows
+        int m = strs[0].size();   // Number of columns (length of each string)
+        int count = 0;            // Count of unsorted columns
+        
+        // 🔄 Iterate through each column
+        for (int i = 0; i < m; i++) {
+            
+            // 🔍 Check if this column is sorted
+            // Compare each row with the previous row
+            for (int j = 1; j < n; j++) {
+                
+                // ⚠️ If current character < previous character → NOT SORTED!
+                if (strs[j][i] < strs[j - 1][i]) {
+                    count++;    // This column must be deleted
+                    break;      // No need to check further in this column
+                }
+            }
+        }
+        
+        return count;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Core Idea: Check columns, not rows
+   - Natural instinct: read strings row by row
+   - Solution: think in terms of columns (vertical reading)
+
+🔑 Optimization: Early Break
+   - Once we find one violation in a column, no need to check rest
+   - Saves unnecessary comparisons
+
+⚠️ Edge Cases:
+   - Single string (n=1) → all columns sorted → return 0
+   - All columns sorted → return 0
+   - All columns unsorted → return m
+   - Empty strings → return 0 (though constraints prevent this)
+
+🎯 Why This Works:
+   - Each column is independent
+   - A column is either sorted or not (binary decision)
+   - Count all unsorted columns
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Visual Grid Representation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Example: ["zyx", "wvu", "tsr"]
+
+Grid View:
+    Col 0  Col 1  Col 2
+    ↓      ↓      ↓
+    z      y      x     ← strs[0]
+    w      v      u     ← strs[1]
+    t      s      r     ← strs[2]
+
+Checking:
+- Col 0: z → w → t (z > w, not sorted!) ❌
+- Col 1: y → v → s (y > v, not sorted!) ❌
+- Col 2: x → u → r (x > u, not sorted!) ❌
+
+Answer: 3 (all columns must be deleted)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 Step-by-Step Trace
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: ["abc", "bce", "cae"]
+
+i=0 (Column 0: a,b,c):
+  j=1: 'b' >= 'a' ✅
+  j=2: 'c' >= 'b' ✅
+  Sorted! count = 0
+
+i=1 (Column 1: b,c,a):
+  j=1: 'c' >= 'b' ✅
+  j=2: 'a' < 'c' ❌ BREAK!
+  Not sorted! count = 1
+
+i=2 (Column 2: c,e,e):
+  j=1: 'e' >= 'c' ✅
+  j=2: 'e' >= 'e' ✅
+  Sorted! count = 1
+
+Output: 1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Variations & Extensions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Variation 1: Return which columns to delete
+  vector<int> columnsToDelete;
+  for (int i = 0; i < m; i++) {
+      bool sorted = true;
+      for (int j = 1; j < n; j++) {
+          if (strs[j][i] < strs[j-1][i]) {
+              sorted = false;
+              break;
+          }
+      }
+      if (!sorted) columnsToDelete.push_back(i);
+  }
+
+Variation 2: Allow equal characters (non-decreasing)
+  // Already handled! We use '<' not '<='
+
+Variation 3: Sort in descending order instead
+  if (strs[j][i] > strs[j-1][i]) {  // Change '<' to '>'
+      count++;
+      break;
+  }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Common Mistakes to Avoid
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Mistake 1: Checking rows instead of columns
+  for (int i = 0; i < n; i++) {
+      for (int j = 1; j < m; j++) {
+          if (strs[i][j] < strs[i][j-1]) ...  // WRONG!
+      }
+  }
+
+❌ Mistake 2: Using '<=' instead of '<'
+  if (strs[j][i] <= strs[j-1][i]) ...  // WRONG! Equal is OK!
+
+❌ Mistake 3: Not breaking after finding violation
+  // Wastes time checking rest of column
+
+✅ Correct Approach: Check columns vertically with early break!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 Related Problems
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Similar patterns:
+- Delete Columns to Make Sorted II (harder version)
+- Delete Columns to Make Sorted III (hardest version)
+- Valid Matrix Given Row and Column Sums
+- Transpose Matrix
+- Rotate Image
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
