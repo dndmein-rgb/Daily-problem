@@ -1,0 +1,299 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 21, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 955. Delete Columns to Make Sorted II
+📌 Link: https://leetcode.com/problems/delete-columns-to-make-sorted-ii/
+🏷️ Difficulty: Medium
+🏆 Topics: Array, String, Greedy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given an array of strings (all same length):
+- Delete minimum columns so that remaining columns make rows lexicographically sorted
+- Unlike Problem I: We care about FULL STRING comparison after deletion
+- Once two adjacent rows are already sorted (row[i] < row[i+1]), we can ignore
+  future violations between them
+
+Key Difference from Problem I:
+- Problem I: Each column independent
+- Problem II: Columns work together to ensure row ordering
+
+Example:
+  strs = ["ca", "bb", "ac"]
+  
+  Initially:
+    ca  ← row 0
+    bb  ← row 1
+    ac  ← row 2
+  
+  Check Column 0 (c, b, a):
+    row[0] vs row[1]: 'c' > 'b' ❌ Delete column 0!
+  
+  After deleting column 0:
+    a  ← row 0
+    b  ← row 1
+    c  ← row 2
+  
+  Sorted! ✅ Answer: 1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Greedy with "Already Sorted" Tracking
+
+Key Insight:
+Once we determine that row[i] < row[i+1] based on seen columns, we mark this
+pair as "already sorted". Future violations between this pair can be ignored!
+
+Algorithm:
+1️⃣ Maintain alreadySorted[] array for adjacent row pairs
+2️⃣ For each column:
+   a. Check if it violates any pair that's NOT already sorted
+   b. If violation found → delete this column
+   c. If no violation → mark pairs as sorted where strs[i][col] < strs[i+1][col]
+3️⃣ Return count of deleted columns
+
+State Machine:
+  For each pair (row[i], row[i+1]):
+    NOT sorted → Check column → Violation? Delete : Mark sorted
+    Already sorted → Skip checking (already determined to be sorted)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: strs = ["xc", "yb", "za"]
+
+Initial State:
+  alreadySorted = [false, false]  // pairs: (0,1) and (1,2)
+
+Column 0: x, y, z
+  Check pair (0,1): 'x' vs 'y'
+    'x' < 'y' ✅ No violation
+  Check pair (1,2): 'y' vs 'z'
+    'y' < 'z' ✅ No violation
+  
+  No deletions! Update alreadySorted:
+    pair (0,1): 'x' < 'y' → alreadySorted[0] = true
+    pair (1,2): 'y' < 'z' → alreadySorted[1] = true
+  
+  alreadySorted = [true, true]
+
+Column 1: c, b, a
+  Check pair (0,1): alreadySorted[0] = true → SKIP!
+  Check pair (1,2): alreadySorted[1] = true → SKIP!
+  
+  All pairs already sorted, no need to check!
+
+Result: 0 deletions
+
+After keeping both columns:
+  Rows: "xc", "yb", "za"
+  "xc" < "yb" < "za" ✅ Lexicographically sorted!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity:  O(n × m)
+   └─ n = number of strings (rows)
+   └─ m = length of each string (columns)
+   └─ Each cell visited at most once
+   └─ Early termination when all pairs are sorted
+   
+💾 Space Complexity: O(n)
+   └─ alreadySorted array of size (n-1)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    int minDeletionSize(vector<string>& strs) {
+        int rows = strs.size();
+        int cols = strs[0].size();
+        
+        int deletion = 0;
+        
+        // 📊 Track which adjacent row pairs are already determined to be sorted
+        // alreadySorted[i] = true means strs[i] < strs[i+1] is confirmed
+        vector<bool> alreadySorted(rows - 1, false);
+        
+        // 🔄 Process each column left to right
+        for (int col = 0; col < cols; col++) {
+            bool deleted = false;
+            
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // Step 1: Check if this column causes violations
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            for (int row = 0; row < rows - 1; row++) {
+                // 🔑 KEY: Only check pairs that aren't already sorted!
+                // If alreadySorted[row] = true, we already know strs[row] < strs[row+1]
+                // So any violation here doesn't matter
+                if (!alreadySorted[row] && strs[row][col] > strs[row + 1][col]) {
+                    // ❌ Violation found! Must delete this column
+                    deleted = true;
+                    deletion++;
+                    break;  // No need to check further
+                }
+            }
+            
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // Step 2: If column not deleted, update alreadySorted
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            if (deleted) {
+                continue;  // Skip updating if we deleted this column
+            }
+            
+            // 🎯 Mark pairs as sorted when we find strict inequality
+            for (int row = 0; row < rows - 1; row++) {
+                // If this pair shows strs[row] < strs[row+1], they're sorted!
+                // Once sorted, they stay sorted (can't un-sort)
+                // Use bitwise OR to preserve existing true values
+                alreadySorted[row] = alreadySorted[row] || (strs[row][col] < strs[row + 1][col]);
+            }
+        }
+        
+        return deletion;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Core Concept: Lexicographic Ordering with Early Determination
+   - Once we know strs[i] < strs[i+1] from earlier columns,
+     later columns don't matter for this comparison
+   
+🔑 Why alreadySorted Works:
+   - Lexicographic comparison stops at first difference
+   - If "abc" < "abd", we know it from position 2 ('c' < 'd')
+   - Position 3+ don't matter for this comparison
+   
+⚠️ Common Pitfalls:
+   - Forgetting to check !alreadySorted[row] before violation check
+   - Using '=' instead of '|' when updating alreadySorted
+   - Continuing to check all rows even after finding violation
+
+🎯 Greedy Choice:
+   - We process columns left to right (greedy order)
+   - Each column is either kept or deleted
+   - No backtracking needed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Detailed Example with State Tracking
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: ["ca", "bb", "ac"]
+
+Initial:
+  ca  ← row 0
+  bb  ← row 1
+  ac  ← row 2
+  
+  alreadySorted = [false, false]
+  deletions = 0
+
+Column 0: [c, b, a]
+  Check row 0: alreadySorted[0]=false
+    'c' > 'b' ❌ VIOLATION!
+    Delete column 0
+    deletions = 1
+  Continue to next column (don't update alreadySorted)
+
+Column 1: [a, b, c]
+  Check row 0: alreadySorted[0]=false
+    'a' < 'b' ✅ No violation
+  Check row 1: alreadySorted[1]=false
+    'b' < 'c' ✅ No violation
+  
+  No deletions! Update alreadySorted:
+    'a' < 'b' → alreadySorted[0] = true
+    'b' < 'c' → alreadySorted[1] = true
+
+Final:
+  Remaining columns: [column 1]
+  Rows become: "a", "b", "c"
+  "a" < "b" < "c" ✅ Sorted!
+  Answer: 1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 Why Bitwise OR (|) for alreadySorted Update?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+alreadySorted[i] = alreadySorted[i] | (strs[i][col] < strs[i+1][col]);
+
+Truth table:
+  Old Value | New Check | Result | Meaning
+  ----------|-----------|--------|------------------
+  false     | false     | false  | Still not sorted
+  false     | true      | true   | Just became sorted!
+  true      | false     | true   | Already sorted (stays sorted)
+  true      | true      | true   | Already sorted (stays sorted)
+
+Key: Once true, always true! Can't "un-sort" a pair.
+
+Alternative (equivalent):
+  if (strs[i][col] < strs[i+1][col]) {
+      alreadySorted[i] = true;
+  }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Optimization: Early Termination
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+We can stop early if all pairs are already sorted:
+
+for (int col = 0; col < cols; col++) {
+    // 🎯 Early termination check
+    bool allSorted = true;
+    for (int row = 0; row < rows - 1; row++) {
+        if (!alreadySorted[row]) {
+            allSorted = false;
+            break;
+        }
+    }
+    if (allSorted) {
+        break;  // All pairs determined, remaining columns don't matter!
+    }
+    
+    // ... rest of column processing
+}
+
+This optimization can save significant time when rows become sorted early!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Comparison: Problem I vs Problem II
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────┬─────────────────────┬─────────────────────┐
+│ Aspect           │ Problem I           │ Problem II          │
+├──────────────────┼─────────────────────┼─────────────────────┤
+│ Goal             │ Each column sorted  │ Rows sorted (lex)   │
+│ Columns          │ Independent         │ Work together       │
+│ State tracking   │ None needed         │ alreadySorted array │
+│ Complexity       │ O(n × m)            │ O(n × m)            │
+│ Early exit       │ Per column          │ Per column + global │
+│ Difficulty       │ Easy                │ Medium              │
+└──────────────────┴─────────────────────┴─────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Related Problems
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Similar patterns:
+- Delete Columns to Make Sorted I (easier)
+- Delete Columns to Make Sorted III (harder, DP)
+- Minimum Number of Removals to Make Array Sorted
+- Is Subsequence
+- Longest Increasing Subsequence
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
