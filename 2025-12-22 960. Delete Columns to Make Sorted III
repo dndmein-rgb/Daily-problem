@@ -1,0 +1,312 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 22, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 960. Delete Columns to Make Sorted III
+📌 Link: https://leetcode.com/problems/delete-columns-to-make-sorted-iii/
+🏷️ Difficulty: Hard
+🏆 Topics: Array, String, Dynamic Programming
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given an array of strings (all same length):
+- Delete minimum columns so that remaining columns make rows lexicographically sorted
+- Unlike Problem II: Can delete ANY columns (not just checking left to right)
+
+Goal: Find minimum deletions to make all remaining columns work together
+
+Key Difference from Problem I & II:
+- Problem I: Each column independent → check if sorted
+- Problem II: Process left to right → skip already sorted pairs
+- Problem III: Can choose ANY subset of columns → find longest valid subsequence
+
+Example:
+  strs = ["babca", "bbazb", "cbccc"]
+  
+  Grid view:
+    b a b c a  ← row 0
+    b b a z b  ← row 1
+    c b c c c  ← row 2
+  
+  Keep columns 0, 1, 3:
+    b a c  ← sorted? "bac" ✅
+    b b z  ← sorted? "bbz" ✅
+    c b c  ← sorted? "cbc" ✅
+  
+  All rows sorted! Delete 2 columns (2, 4)
+  Answer: 2
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Longest Increasing Subsequence (LIS) on Columns
+
+Key Insight:
+- Instead of "which to delete", think "which to KEEP"
+- We want to keep maximum columns such that rows remain sorted
+- This is LIS problem where "increasing" = "valid column order"
+
+Algorithm:
+1️⃣ Define "valid order" between columns:
+   - Column j can come before column i if:
+   - For ALL rows: strs[row][j] ≤ strs[row][i]
+
+2️⃣ Use DP to find longest chain of valid columns:
+   - dp[i] = longest valid subsequence ending at column i
+   - For each i, check all j < i
+   - If column j can come before i → dp[i] = max(dp[i], dp[j] + 1)
+
+3️⃣ Find maximum dp value (longest valid subsequence)
+
+4️⃣ Answer = total columns - longest subsequence
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: strs = ["bab", "ddb", "cbd"]
+
+Grid:
+  Column:  0  1  2
+          b  a  b  ← row 0
+          d  d  b  ← row 1
+          c  b  d  ← row 2
+
+Step 1: Initialize DP
+  dp = [1, 1, 1]  // Each column can form a subsequence of length 1
+
+Step 2: Process each column
+
+i = 0 (column 0: b, d, c):
+  No previous columns
+  dp[0] = 1
+
+i = 1 (column 1: a, d, b):
+  Check j = 0 (column 0: b, d, c):
+    Row 0: 'b' ≤ 'a'? NO (b > a) ❌
+  Invalid, dp[1] = 1
+
+i = 2 (column 2: b, b, d):
+  Check j = 0 (column 0: b, d, c):
+    Row 0: 'b' ≤ 'b'? YES ✅
+    Row 1: 'd' ≤ 'b'? NO (d > b) ❌
+  Invalid
+  
+  Check j = 1 (column 1: a, d, b):
+    Row 0: 'a' ≤ 'b'? YES ✅
+    Row 1: 'd' ≤ 'b'? NO (d > b) ❌
+  Invalid
+  
+  dp[2] = 1
+
+Step 3: Find LIS
+  lis = max(1, 1, 1) = 1
+
+Step 4: Calculate deletions
+  Answer = 3 - 1 = 2
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity:  O(cols² × rows)
+   └─ Outer loop: cols iterations
+   └─ Inner loop: up to cols iterations
+   └─ Validation: rows comparisons
+   └─ Total: O(cols² × rows)
+   
+💾 Space Complexity: O(cols)
+   └─ dp array of size cols
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    int minDeletionSize(vector<string>& strs) {
+        int rows = strs.size();
+        int cols = strs[0].size();
+        
+        // 📊 dp[i] = length of longest valid column subsequence ending at column i
+        vector<int> dp(cols, 1);  // Each column alone is valid (length 1)
+        int lis = 1;              // Track longest increasing subsequence
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Step 1: Build DP table using LIS approach
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        for (int i = 0; i < cols; i++) {
+            
+            // Check all previous columns
+            for (int j = 0; j < i; j++) {
+                
+                // 🔍 Validate: Can column j come before column i?
+                // Check if for ALL rows: strs[row][j] ≤ strs[row][i]
+                bool valid = true;
+                for (int row = 0; row < rows; row++) {
+                    if (strs[row][j] > strs[row][i]) {
+                        valid = false;
+                        break;  // Early exit on first violation
+                    }
+                }
+                
+                // ✅ If valid, extend subsequence from j
+                if (valid) {
+                    dp[i] = max(dp[i], dp[j] + 1);
+                }
+            }
+            
+            // Track maximum subsequence length
+            lis = max(lis, dp[i]);
+        }
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Step 2: Calculate minimum deletions
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Keep longest valid subsequence, delete rest
+        return cols - lis;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Core Pattern: LIS (Longest Increasing Subsequence)
+   - Classic LIS: find longest increasing sequence in array
+   - Here: find longest valid column sequence
+   - "Increasing" = column j can precede column i
+
+🔑 Why This Works:
+   - We want to KEEP maximum columns
+   - "Minimum deletions" = "Maximum kept" complement
+   - Kept columns must form valid ordering
+   - This is exactly LIS on columns!
+
+⚠️ Validation Logic:
+   Column j can precede column i if:
+     ∀ rows: strs[row][j] ≤ strs[row][i]
+   
+   Must be true for ALL rows (not just one!)
+
+🎯 DP Recurrence:
+   dp[i] = max(dp[i], dp[j] + 1)  where column j can precede i
+   
+   Translation: "Best subsequence ending at i is either:
+   - Just column i alone (dp[i] = 1)
+   - Extend some previous valid subsequence"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Detailed Example with DP Table
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: ["cba", "daf", "ghi"]
+
+Grid:
+  Col:  0  1  2
+        c  b  a  ← row 0
+        d  a  f  ← row 1
+        g  h  i  ← row 2
+
+Process:
+
+i=0 (c,d,g):
+  dp[0] = 1
+
+i=1 (b,a,h):
+  Check j=0 (c,d,g):
+    Row 0: c ≤ b? NO ❌
+  dp[1] = 1
+
+i=2 (a,f,i):
+  Check j=0 (c,d,g):
+    Row 0: c ≤ a? NO ❌
+  
+  Check j=1 (b,a,h):
+    Row 0: b ≤ a? NO ❌
+  
+  dp[2] = 1
+
+Final: lis = max(1,1,1) = 1
+Answer: 3 - 1 = 2
+
+Meaning: Can only keep 1 column at most!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🆚 Comparison: Problem I vs II vs III
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────┬─────────────────┬─────────────────┬─────────────────┐
+│ Aspect   │ Problem I       │ Problem II      │ Problem III     │
+├──────────┼─────────────────┼─────────────────┼─────────────────┤
+│ Goal     │ Each col sorted │ Rows sorted     │ Rows sorted     │
+│ Approach │ Check each col  │ Greedy + state  │ DP (LIS)        │
+│ Deletion │ Independent     │ Sequential      │ Optimal subset  │
+│ Pattern  │ Simple check    │ State machine   │ LIS variant     │
+│ Time     │ O(n×m)          │ O(n×m)          │ O(m²×n)         │
+│ Diff     │ Easy            │ Medium          │ Hard            │
+└──────────┴─────────────────┴─────────────────┴─────────────────┘
+
+Problem III is hardest because:
+- Must find OPTIMAL column subset
+- Not just greedy left-to-right
+- Requires DP optimization
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 Why LIS Pattern?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Classic LIS:
+  Array: [10, 9, 2, 5, 3, 7, 101, 18]
+  LIS: [2, 3, 7, 18] (length 4)
+  
+  dp[i] = longest increasing subsequence ending at i
+
+This Problem:
+  Columns: [col0, col1, col2, ...]
+  Valid sequence: columns that maintain row ordering
+  
+  dp[i] = longest valid column sequence ending at column i
+
+Same pattern, different "increasing" definition!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Optimization Ideas
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current: O(cols² × rows)
+
+Possible optimizations:
+1. Early termination in validation loop
+2. Memoize column comparisons (if rows large)
+3. Use segment tree for range queries (advanced)
+
+For most inputs, current solution is optimal!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Related Problems
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Similar patterns:
+- Longest Increasing Subsequence (LeetCode 300) - foundation
+- Delete Columns to Make Sorted I & II
+- Russian Doll Envelopes (2D LIS)
+- Maximum Length of Pair Chain
+- Number of Longest Increasing Subsequence
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Learning Points
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ✅ Recognize LIS variants in different contexts
+2. ✅ Transform "minimum deletion" to "maximum retention"
+3. ✅ Custom ordering definitions (not just numeric comparison)
+4. ✅ DP on subsequences
+5. ✅ Column-wise thinking in grid problems
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
