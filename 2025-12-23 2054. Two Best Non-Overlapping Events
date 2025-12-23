@@ -1,0 +1,323 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 24, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 2054. Two Best Non-Overlapping Events
+📌 Link: https://leetcode.com/problems/two-best-non-overlapping-events/
+🏷️ Difficulty: Medium
+🏆 Topics: Array, Binary Search, Dynamic Programming, Sorting
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given an array of events where events[i] = [startTime_i, endTime_i, value_i]:
+- You can attend at most 2 events
+- Events cannot overlap (if you attend event i, you can't attend event j if they overlap)
+- Two events overlap if one starts before/during the other ends
+
+Goal: Return maximum sum of values of at most 2 non-overlapping events
+
+Constraints:
+- Can attend 0, 1, or 2 events
+- Events are non-overlapping if: event1.end < event2.start
+
+Example:
+  events = [[1,3,2], [4,5,2], [2,4,3]]
+  
+  Timeline:
+    Event 0: [1,3] value=2  ████████
+    Event 1: [4,5] value=2          ████
+    Event 2: [2,4] value=3      ██████
+  
+  Best choice: Event 0 + Event 1 (non-overlapping)
+  Sum: 2 + 2 = 4
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: DP + Binary Search + Sorting
+
+Key Insights:
+1️⃣ Sort events by start time (process chronologically)
+2️⃣ For each event, decide: take it or skip it
+3️⃣ If take: find next non-overlapping event using binary search
+4️⃣ Track how many events selected (max 2)
+5️⃣ Use memoization to avoid recomputation
+
+Algorithm:
+1️⃣ Sort events by start time
+2️⃣ Define DP state: solve(i, count)
+   - i = current event index
+   - count = number of events already selected
+3️⃣ For each event:
+   - Option 1: Skip this event → solve(i+1, count)
+   - Option 2: Take this event → value + solve(nextValidIndex, count+1)
+     where nextValidIndex is first event starting after current ends
+4️⃣ Return maximum of both options
+
+Binary Search:
+- Find first event with start time > current event's end time
+- This ensures non-overlapping
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: events = [[1,3,2], [4,5,2], [2,4,3]]
+
+Step 1: Sort by start time
+  [[1,3,2], [2,4,3], [4,5,2]]
+   ↑ start time
+
+Step 2: Start recursion solve(0, 0)
+  Current event: [1,3,2], count=0
+
+  Option 1: Skip
+    solve(1, 0)
+  
+  Option 2: Take (value = 2)
+    Find next valid: upperBound(3) → index 2 (event [4,5,2])
+    2 + solve(2, 1)
+
+Step 3: Expand take path
+  solve(2, 1): event [4,5,2], count=1
+  
+  Option 1: Skip → solve(3, 1) = 0 (out of bounds)
+  Option 2: Take → 2 + solve(3, 2) = 2
+  
+  Result: max(0, 2) = 2
+
+Step 4: Total for take path
+  2 + 2 = 4
+
+Step 5: Expand skip path (solve(1, 0))
+  Event [2,4,3], count=0
+  
+  Option 1: Skip → solve(2, 0)
+  Option 2: Take → 3 + solve(2, 1)
+  
+  Eventually: max value = 3 + 2 = 5? Wait...
+  
+  Actually after full recursion: answer = 4
+
+Output: 4
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity:  O(n log n + n × 2 × log n)
+   └─ Sorting: O(n log n)
+   └─ DP states: n × 3 (index × count) = O(n)
+   └─ Each state: binary search O(log n)
+   └─ Total: O(n log n)
+   
+💾 Space Complexity: O(n × 3)
+   └─ Memoization table: t[n][3]
+   └─ Recursion stack: O(n) worst case
+   └─ Total: O(n)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    int n;
+    int t[100001][3];  // Memoization: t[index][count]
+    
+    // 🔍 Binary Search: Find first event starting after endTime
+    int upperBound(vector<vector<int>>& events, int endTime) {
+        int l = 0, r = n - 1, result = n;
+        
+        while (l <= r) {
+            int mid = l + (r - l) / 2;
+            
+            // Check if this event starts after endTime
+            if (events[mid][0] > endTime) {
+                result = mid;     // This could be the answer
+                r = mid - 1;      // Look for earlier valid event
+            } else {
+                l = mid + 1;      // Look for later events
+            }
+        }
+        
+        return result;  // Index of first non-overlapping event
+    }
+    
+    // 🎯 Recursive DP with memoization
+    int solve(int i, vector<vector<int>>& events, int count) {
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Base cases
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        
+        // Already selected 2 events OR processed all events
+        if (count == 2 || i >= n) return 0;
+        
+        // ✅ Check memoization
+        if (t[i][count] != -1) return t[i][count];
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Option 1: Take current event
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        
+        // Find next non-overlapping event
+        int nextValidIndex = upperBound(events, events[i][1]);
+        
+        // Take current event + solve for next valid event
+        int take = events[i][2] + solve(nextValidIndex, events, count + 1);
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Option 2: Skip current event
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        int notTake = solve(i + 1, events, count);
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Store and return maximum
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        return t[i][count] = max(take, notTake);
+    }
+    
+    int maxTwoEvents(vector<vector<int>>& events) {
+        n = events.size();
+        
+        // 🎨 Initialize memoization table
+        memset(t, -1, sizeof(t));
+        
+        // 📊 Sort events by start time
+        sort(events.begin(), events.end());
+        
+        // 🚀 Start recursion from index 0, count 0
+        return solve(0, events, 0);
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Core Pattern: Interval Scheduling + DP
+   - Classic interval scheduling problem
+   - Limited to 2 selections (makes it tractable)
+   - DP + Binary Search optimization
+
+🔑 Why Sort by Start Time?
+   - Process events chronologically
+   - Can use binary search to find next valid event
+   - Ensures we don't miss any valid combinations
+
+⚠️ Non-Overlapping Definition:
+   Event 1 ends before Event 2 starts:
+     event1.end < event2.start ✅
+   
+   NOT just event1.end != event2.start:
+     [1,3] and [3,5] → overlapping! (3 = 3)
+
+🎯 DP State Design:
+   - i: current event being considered
+   - count: how many events already selected (0, 1, or 2)
+   - Optimal substructure: max value from current state
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 DP State Transitions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+State: solve(i, count)
+
+Base Cases:
+  count == 2 → return 0 (already selected 2 events)
+  i >= n → return 0 (no more events to consider)
+
+Transitions:
+  ┌─────────────────────────────────────────────┐
+  │           solve(i, count)                   │
+  └────────────┬────────────────────────────────┘
+               │
+       ┌───────┴────────┐
+       │                │
+    Skip             Take
+       │                │
+       ▼                ▼
+  solve(i+1,      value[i] +
+   count)        solve(next, count+1)
+       │                │
+       └────────┬───────┘
+                │
+         return max
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Binary Search Visualization
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Events sorted by start time:
+  [1,3,2]  [2,4,3]  [4,5,2]  [6,7,1]
+     0        1        2        3
+
+Current event: [1,3,2] (ends at 3)
+Find first event starting > 3:
+
+Binary search:
+  l=0, r=3, mid=1 → events[1].start=2 ≤ 3 → l=2
+  l=2, r=3, mid=2 → events[2].start=4 > 3 → result=2, r=1
+  l=2, r=1 → stop
+  
+  Return: index 2 ([4,5,2])
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 Why Memoization Works
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Without memoization:
+  Recursive tree can have exponential nodes
+  Same subproblems computed multiple times
+
+With memoization:
+  Each unique (i, count) computed once
+  States: n × 3 = O(n)
+  Saves massive computation!
+
+Example overlap:
+  solve(5, 1) might be reached from:
+    - solve(3, 0) → take event 4
+    - solve(4, 1) → skip event 4
+  
+  With memo: compute once, reuse!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Alternative Approach: Sweep Line
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Can also solve using sweep line + max heap:
+1. Process events by end time
+2. Track max value seen so far
+3. For each event: max(single event, event + best before)
+
+Both approaches: O(n log n) time
+Current DP approach is more intuitive!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Related Problems
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Similar patterns:
+- Maximum Profit in Job Scheduling (LeetCode 1235)
+- Non-overlapping Intervals (LeetCode 435)
+- Minimum Number of Arrows to Burst Balloons (LeetCode 452)
+- Merge Intervals (LeetCode 56)
+- Meeting Rooms II (LeetCode 253)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Learning Points
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ✅ Interval scheduling with DP
+2. ✅ Binary search for next valid element
+3. ✅ Memoization with multiple dimensions
+4. ✅ Sorting as preprocessing step
+5. ✅ Take/skip decision tree pattern
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
