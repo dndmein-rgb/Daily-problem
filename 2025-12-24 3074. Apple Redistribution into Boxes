@@ -1,0 +1,285 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 24, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 3074. Apple Redistribution into Boxes
+📌 Link: https://leetcode.com/problems/apple-redistribution-into-boxes/
+🏷️ Difficulty: Easy
+🏆 Topics: Array, Sorting, Greedy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- Array apple where apple[i] = number of apples in pack i
+- Array capacity where capacity[i] = capacity of box i
+
+Goal:
+- Redistribute apples into boxes
+- Return minimum number of boxes needed to store all apples
+
+Strategy:
+- Use boxes with largest capacity first (greedy)
+- Keep adding boxes until all apples are stored
+
+Example:
+  apple = [1, 3, 2]      → Total apples = 6
+  capacity = [4, 3, 1, 5, 2]
+  
+  Sort capacity descending: [5, 4, 3, 2, 1]
+  
+  Box 1 (capacity 5): stores 5 apples, remaining = 1
+  Box 2 (capacity 4): stores 1 apple, remaining = 0
+  
+  Answer: 2 boxes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Greedy + Sorting
+
+Key Insight:
+- To minimize boxes, use largest capacity boxes first
+- Keep taking boxes until total capacity ≥ total apples
+
+Algorithm:
+1️⃣ Calculate total number of apples
+2️⃣ Sort boxes by capacity in descending order
+3️⃣ Keep adding boxes (largest first) until all apples fit
+4️⃣ Return count of boxes used
+
+Why Greedy Works:
+- Using larger boxes first minimizes box count
+- No need to try different combinations
+- Optimal solution guaranteed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: apple = [1, 3, 2], capacity = [4, 3, 1, 5, 2]
+
+Step 1: Calculate total apples
+  total = 1 + 3 + 2 = 6
+
+Step 2: Sort capacity in descending order
+  capacity = [5, 4, 3, 2, 1]
+
+Step 3: Fill boxes greedily
+  
+  Box 0 (capacity = 5):
+    remaining = 6 - 5 = 1
+    count = 1
+    Still have apples (1 > 0) ❌
+  
+  Box 1 (capacity = 4):
+    remaining = 1 - 4 = -3
+    count = 2
+    All apples stored (-3 ≤ 0) ✅
+
+Step 4: Return count
+  Answer: 2
+
+Visualization:
+  Total: 6 apples
+  ┌─────┐
+  │  5  │ Box 1: 5 apples
+  ├─────┤
+  │  1  │ Box 2: 1 apple
+  └─────┘
+  Total: 6 ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity:  O(n + m log m)
+   └─ Calculate total: O(n) where n = apple.size()
+   └─ Sort capacity: O(m log m) where m = capacity.size()
+   └─ Fill boxes: O(m) worst case (all boxes might be needed)
+   └─ Total: O(n + m log m)
+   
+💾 Space Complexity: O(1)
+   └─ Sorting in-place (assuming built-in sort doesn't count)
+   └─ Only using constant extra variables
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    int minimumBoxes(vector<int>& apple, vector<int>& capacity) {
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Step 1: Calculate total number of apples
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        int total = accumulate(apple.begin(), apple.end(), 0);
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Step 2: Sort boxes by capacity (largest first)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Using rbegin() and rend() for reverse sort
+        sort(capacity.rbegin(), capacity.rend());
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Step 3: Fill boxes greedily until all apples stored
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        int count = 0;
+        
+        for (int i = 0; i < capacity.size(); i++) {
+            // Subtract current box capacity from total
+            total -= capacity[i];
+            
+            // Increment box count
+            count++;
+            
+            // ✅ Check if all apples are stored
+            // If total ≤ 0, we've stored all apples
+            if (total <= 0) {
+                return count;
+            }
+        }
+        
+        // This line should never be reached if input is valid
+        // (guaranteed that boxes can store all apples)
+        return count;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Greedy Choice:
+   - Always use largest available box first
+   - Minimizes total number of boxes
+   - No need to consider other orderings
+
+🔑 Why Sorting Works:
+   - Problem has optimal substructure
+   - Local optimal choice (largest box) → global optimal
+   - Proof: If we don't use largest box first, we'll need more boxes
+
+⚠️ Edge Cases:
+   - Single apple, single box
+   - Total apples = 0 (though constraints say ≥ 1)
+   - All boxes same capacity
+   - One huge box that fits everything
+
+🎯 Alternative: Sort Ascending
+   Could also sort ascending and use from end:
+   sort(capacity.begin(), capacity.end());
+   for (int i = capacity.size()-1; i >= 0; i--)
+   
+   But rbegin()/rend() is cleaner!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Visual Example
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: apple = [5, 5, 5], capacity = [2, 4, 2, 7]
+
+Step 1: Total = 15 apples
+
+Step 2: Sort capacity = [7, 4, 2, 2]
+
+Step 3: Fill boxes
+┌─────────────────────────────────────┐
+│ Iteration │ Box Cap │ Remaining │ Count │
+├───────────┼─────────┼───────────┼───────┤
+│     0     │    7    │  15-7=8   │   1   │
+│     1     │    4    │   8-4=4   │   2   │
+│     2     │    2    │   4-2=2   │   3   │
+│     3     │    2    │   2-2=0   │   4   │ ← Done!
+└─────────────────────────────────────┘
+
+Answer: 4 boxes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 Why This is "Easy"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Single greedy choice (largest first)
+2. No complex state tracking
+3. Straightforward implementation
+4. Clear optimal strategy
+
+Harder versions might involve:
+- Weight limits per box
+- Cost per box (optimize cost vs count)
+- Constraints on which apples can go in which boxes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Code Variations
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Variation 1: Early return inside loop (current)
+  for (int i = 0; i < capacity.size(); i++) {
+      total -= capacity[i];
+      count++;
+      if (total <= 0) return count;
+  }
+
+Variation 2: While loop
+  int i = 0;
+  while (total > 0 && i < capacity.size()) {
+      total -= capacity[i++];
+      count++;
+  }
+  return count;
+
+Variation 3: Accumulate with lambda
+  sort(capacity.rbegin(), capacity.rend());
+  int sum = 0, count = 0;
+  for (int cap : capacity) {
+      sum += cap;
+      count++;
+      if (sum >= total) break;
+  }
+  return count;
+
+All equivalent, choose based on style preference!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Related Problems
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Similar greedy patterns:
+- Container With Most Water (maximize, not minimize)
+- Boats to Save People (two pointers on sorted array)
+- Minimum Number of Arrows to Burst Balloons
+- Task Scheduler
+- Bag of Tokens
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Learning Points
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ✅ Greedy algorithms for optimization
+2. ✅ Using accumulate() for sum
+3. ✅ Reverse sorting with rbegin()/rend()
+4. ✅ Early termination in loops
+5. ✅ Recognizing when greedy is optimal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 Interview Tips
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If asked this in interview:
+
+1. Clarify: Can boxes hold fractional apples? (Usually no)
+2. Clarify: Are there always enough boxes? (Usually yes)
+3. State greedy strategy clearly
+4. Explain why greedy is optimal
+5. Mention time complexity upfront
+6. Code cleanly with early returns
+
+Good answer: "I'll use a greedy approach - sort boxes by capacity in 
+descending order and fill largest boxes first. This minimizes the total 
+number of boxes needed. Time complexity is O(m log m) for sorting."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
