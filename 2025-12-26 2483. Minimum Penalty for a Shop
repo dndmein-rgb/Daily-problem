@@ -1,1 +1,299 @@
 
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 26, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 2483. Minimum Penalty for a Shop
+📌 Link: https://leetcode.com/problems/minimum-penalty-for-a-shop/
+🏷️ Difficulty: Medium
+🏆 Topics: String, Prefix Sum, Greedy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given a customer visit log string with 'Y' (customer) and 'N' (no customer):
+- Choose an hour to close the shop (0 ≤ j ≤ n)
+- Penalty calculation:
+  • +1 penalty for each hour shop is OPEN with NO customer ('N')
+  • +1 penalty for each hour shop is CLOSED with a customer ('Y')
+- Return the EARLIEST hour that minimizes the penalty
+
+Key Notes:
+- If shop closes at hour j, hours 0 to j-1 are open, hours j to n-1 are closed
+- Closing at hour 0 means shop never opens
+- Closing at hour n means shop is open for all n hours
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach 1: Map-Based Solution (Brute Force)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Calculate penalty for each possible closing hour
+
+Algorithm:
+1️⃣ Count all 'N's (penalty if open all hours)
+2️⃣ For each possible closing hour (0 to n):
+   • Track 'Y's before closing (missed customers)
+   • Track 'N's after closing (avoided penalties)
+3️⃣ Store all penalties in a map
+4️⃣ Find minimum penalty and return earliest hour with that penalty
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SOLUTION 1: MAP-BASED APPROACH (Less Optimal)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class Solution_MapBased {
+public:
+    int bestClosingTime(string c) {
+        int n = c.length();
+        map<int, int> mp;  // {closing_hour: penalty}
+        int nCount = 0, yCount = 0;
+        
+        // 📊 Count total 'N's (penalty if shop stays open all hours)
+        for(int i = 0; i < n; i++) {
+            if(c[i] == 'N') nCount++;
+        }
+        
+        // Hour 0: Close immediately (miss all 'N's avoided, miss all 'Y's)
+        mp[0] = nCount;
+        
+        // 🔄 Calculate penalty for each closing hour
+        for(int i = 1; i <= n; i++) {
+            if(c[i-1] == 'Y') {
+                yCount++;  // One more customer missed
+                mp[i] = yCount + nCount;
+            }
+            else {  // c[i-1] == 'N'
+                mp[i] = mp[i-1] - 1;  // One less 'N' to worry about
+                nCount--;
+            }
+        }
+        
+        // 🎯 Find minimum penalty (stored as maxF due to inverted logic)
+        int maxF = 0;
+        for(auto [hour, penalty] : mp) {
+            maxF = max(maxF, penalty);
+        }
+        
+        // 📍 Return earliest hour with minimum penalty
+        for(auto [hour, penalty] : mp) {
+            if(penalty == maxF) return hour;
+        }
+        
+        return 0;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach 2: Optimized Single Pass (Recommended ⭐)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Track penalty changes incrementally without storing all values
+
+Key Insight:
+• Start by assuming we close at hour 0 → penalty = all 'Y's (missed customers)
+• As we consider closing later:
+  - If we see 'Y' → penalty DECREASES (served this customer)
+  - If we see 'N' → penalty INCREASES (shop open with no customer)
+• Track minimum penalty and the earliest hour achieving it
+
+Algorithm:
+1️⃣ Calculate initial penalty: count all 'Y's (closing at hour 0)
+2️⃣ For each hour i:
+   • Update penalty based on customers[i]
+   • If new penalty < min, update both min and best hour
+3️⃣ Return the earliest hour with minimum penalty
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SOLUTION 2: OPTIMIZED GREEDY APPROACH (Best Solution ⭐)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class Solution {
+public:
+    int bestClosingTime(string customers) {
+        int n = customers.length();
+        
+        // 🎯 Initial penalty: miss all customers (close at hour 0)
+        int penalty = 0;
+        for(char c : customers) {
+            if(c == 'Y') penalty++;
+        }
+        
+        int bestHour = 0;      // Best closing hour found so far
+        int minPenalty = penalty;  // Minimum penalty found so far
+        
+        // 🔄 Try closing at each subsequent hour
+        for(int i = 0; i < n; i++) {
+            if(customers[i] == 'Y') {
+                penalty--;  // ✅ Served this customer, reduce penalty
+            }
+            else {  // customers[i] == 'N'
+                penalty++;  // ❌ Shop open with no customer, increase penalty
+            }
+            
+            // 📉 Found a better closing time?
+            if(penalty < minPenalty) {
+                minPenalty = penalty;
+                bestHour = i + 1;  // Close AFTER this hour
+            }
+        }
+        
+        return bestHour;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Example 1: customers = "YYNY"
+
+Step 1: Initial state (close at hour 0)
+        Y  Y  N  Y
+        ↓  ↓     ↓
+        All customers missed → penalty = 3
+
+Step 2: Try closing at hour 1 (after index 0)
+        ✅ Y | Y N Y
+        Served 1 customer: penalty = 3 - 1 = 2
+        Update: bestHour = 1, minPenalty = 2
+
+Step 3: Try closing at hour 2 (after index 1)
+        ✅ Y ✅ Y | N Y
+        Served another customer: penalty = 2 - 1 = 1
+        Update: bestHour = 2, minPenalty = 1
+
+Step 4: Try closing at hour 3 (after index 2)
+        ✅ Y ✅ Y ❌ N | Y
+        Open with no customer: penalty = 1 + 1 = 2
+        No update (2 > 1)
+
+Step 5: Try closing at hour 4 (after index 3)
+        ✅ Y ✅ Y ❌ N ✅ Y |
+        Served another customer: penalty = 2 - 1 = 1
+        No update (1 = 1, not better)
+
+Output: 2 (earliest hour with penalty = 1)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Example 2: customers = "NNNNN"
+
+Initial: penalty = 0 (no customers to miss)
+Hour 0 is optimal → close immediately
+Output: 0
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Example 3: customers = "YYYY"
+
+Initial: penalty = 4 (miss all customers if close at 0)
+Each hour reduces penalty: 4 → 3 → 2 → 1 → 0
+Best is to stay open all hours
+Output: 4
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SOLUTION 1 (Map-Based):
+⏰ Time Complexity:  O(n log n)
+   └─ O(n) for counting 'N's
+   └─ O(n log n) for map insertions
+   └─ O(n) for finding minimum
+   
+💾 Space Complexity: O(n)
+   └─ Map stores n+1 entries
+
+SOLUTION 2 (Optimized):
+⏰ Time Complexity:  O(n)
+   └─ Two passes: one to count 'Y's, one to find best hour
+   └─ Each character processed constant time
+   
+💾 Space Complexity: O(1)
+   └─ Only using fixed variables
+   └─ No additional data structures
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Core Idea: Penalty is a trade-off
+   • Closing earlier → miss customers ('Y')
+   • Closing later → pay for empty hours ('N')
+
+🔑 Critical Observation:
+   • Penalty changes predictably at each hour
+   • Don't need to recalculate from scratch
+   • Track delta changes: -1 for 'Y', +1 for 'N'
+
+⚠️ Edge Cases Handled:
+   • All 'N's → close at hour 0 immediately
+   • All 'Y's → stay open all hours
+   • Mixed pattern → find optimal balance
+
+🎯 Why Greedy Works:
+   • Each hour's contribution to penalty is independent
+   • Can evaluate closing times left-to-right
+   • First minimum found is the earliest (optimal)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 State Transitions (Solution 2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Penalty Evolution:
+
+Close at 0: penalty = count('Y')
+           ↓
+For each hour i:
+    If 'Y' → penalty--  (served customer)
+    If 'N' → penalty++  (wasted open hour)
+           ↓
+Track minimum and update bestHour when improved
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Example Trace (Solution 2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: "YYNY"
+
+Hour:         0    1    2    3    4
+Customer:     -    Y    Y    N    Y
+Penalty:      3    2    1    2    1
+MinPenalty:   3    2    1    1    1
+BestHour:     0    1    2    2    2
+Action:       -    Y(-) Y(-) N(+) Y(-)
+
+Final Answer: 2
+
+Explanation:
+• Start: penalty = 3 (miss all Y's if close at 0)
+• Hour 1: Served 'Y' → penalty = 2 ✅ Update best
+• Hour 2: Served 'Y' → penalty = 1 ✅ Update best  
+• Hour 3: Open for 'N' → penalty = 2 (no update)
+• Hour 4: Served 'Y' → penalty = 1 (equal, no update)
+
+Return hour 2 (earliest with min penalty)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Why Solution 2 is Better
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ⚡ Linear Time: O(n) vs O(n log n)
+2. 💾 Constant Space: O(1) vs O(n)
+3. 🎯 Simpler Logic: Direct tracking vs map operations
+4. 🚀 Better Performance: Single pass after initial count
+
+Recommendation: Always use Solution 2 in interviews and production code!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
