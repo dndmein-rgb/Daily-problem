@@ -1,0 +1,408 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 27, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 2402. Meeting Rooms III
+📌 Link: https://leetcode.com/problems/meeting-rooms-iii/
+🏷️ Difficulty: Hard
+🏆 Topics: Array, Sorting, Heap (Priority Queue), Simulation, Greedy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You are given:
+- n meeting rooms (numbered 0 to n-1)
+- meetings[i] = [start_i, end_i] (meeting start and end times)
+
+Rules:
+1. Process meetings in order of their start times
+2. If multiple rooms are free, assign the lowest numbered room
+3. If no room is available, wait for the earliest available room and start then
+4. A delayed meeting keeps its original duration
+
+Return: The room number that held the most meetings (if tie, return smallest room)
+
+Constraints:
+- 1 ≤ n ≤ 100
+- 1 ≤ meetings.length ≤ 10^5
+- meetings[i].length == 2
+- 0 ≤ start_i < end_i ≤ 5 * 10^5
+- All start times are unique
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach 1: Simulation with Arrays (Brute Force)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Track each room's availability time and simulate meeting assignments
+
+Algorithm:
+1️⃣ Sort meetings by start time
+2️⃣ Maintain two arrays:
+   • lastAvailableAt[i]: when room i will be free
+   • roomsUsedCount[i]: how many meetings held in room i
+3️⃣ For each meeting:
+   • Try to find first available room (room ≤ start time)
+   • If found, assign it and update availability
+   • If not found, find room that empties earliest
+   • Delay meeting and extend room's availability
+4️⃣ Return room with maximum usage count (lowest number if tie)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SOLUTION 1: ARRAY SIMULATION (Simpler but O(n*m))
+// ═══════════════════════════════════════════════════════════════════════════
+
+class Solution_ArraySimulation {
+public:
+    int mostBooked(int n, vector<vector<int>>& meetings) {
+        int m = meetings.size();
+        
+        // 📅 Sort meetings by start time (required by problem)
+        sort(begin(meetings), end(meetings)); 
+        
+        // 📊 Track room usage and availability
+        vector<int> roomsUsedCount(n, 0);         // Count meetings per room
+        vector<long long> lastAvailableAt(n, 0);  // When each room becomes free
+        
+        // 🔄 Process each meeting in chronological order
+        for(vector<int>& meet : meetings) {
+            int start = meet[0];
+            int end   = meet[1];
+            bool found = false;
+            
+            long long earliestEndRoomTime = LLONG_MAX;  // Track earliest available room
+            int earliestEndRoom = 0;
+            
+            // 🔍 Try to find first available room
+            for(int room = 0; room < n; room++) {
+                // ✅ Room is available at meeting start time
+                if(lastAvailableAt[room] <= start) {
+                    found = true;
+                    lastAvailableAt[room] = end;  // Book until meeting ends
+                    roomsUsedCount[room]++;
+                    break;  // Always pick lowest numbered available room
+                }
+                
+                // 📝 Track which room becomes available earliest
+                if(lastAvailableAt[room] < earliestEndRoomTime) {
+                    earliestEndRoom = room;
+                    earliestEndRoomTime = lastAvailableAt[room];
+                }
+            }
+            
+            // ⏰ No room available - delay meeting in earliest available room
+            if(!found) {
+                // Meeting starts when room becomes free
+                // Duration stays same: (end - start)
+                lastAvailableAt[earliestEndRoom] += (end - start);
+                roomsUsedCount[earliestEndRoom]++;
+            }
+        }
+        
+        // 🏆 Find room with most meetings (lowest number if tie)
+        int resultRoom = -1;
+        int maxUse = 0;
+        for(int room = 0; room < n; room++) {
+            if(roomsUsedCount[room] > maxUse) {
+                maxUse = roomsUsedCount[room];
+                resultRoom = room;
+            }
+        }
+        
+        return resultRoom;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach 2: Priority Queue (Optimal Solution ⭐)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Use heaps to efficiently track room availability
+
+Key Insight:
+• Don't iterate through all rooms for each meeting
+• Use min-heap to get lowest numbered available room in O(log n)
+• Use min-heap to track when rooms become free
+
+Data Structures:
+• unusedRooms: min-heap of available room numbers
+• usedRooms: min-heap of {end_time, room_number} pairs
+
+Algorithm:
+1️⃣ Sort meetings by start time
+2️⃣ Initially, all rooms are unused (in min-heap)
+3️⃣ For each meeting:
+   a. Move rooms that are free by meeting start to unusedRooms
+   b. If unused rooms exist:
+      • Pop lowest numbered room
+      • Schedule meeting, push to usedRooms
+   c. Else (all rooms busy):
+      • Get room that frees earliest from usedRooms
+      • Delay meeting to start when room is free
+      • Push back to usedRooms with new end time
+4️⃣ Return room with maximum usage
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SOLUTION 2: PRIORITY QUEUE APPROACH (Optimal ⭐)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class Solution {
+public:
+    typedef pair<long long, int> P;  // {end_time, room_number}
+    
+    int mostBooked(int n, vector<vector<int>>& meetings) {
+        int m = meetings.size();
+        
+        // 📅 Sort meetings by start time
+        sort(begin(meetings), end(meetings));
+        
+        // 📊 Track meeting count per room
+        vector<int> roomsUsedCount(n, 0);
+        
+        // 🔴 Min-heap: {end_time, room_number} - rooms currently in use
+        priority_queue<P, vector<P>, greater<P>> usedRooms;
+        
+        // 🟢 Min-heap: room_number - available rooms (lowest first)
+        priority_queue<int, vector<int>, greater<int>> unusedRooms;
+        
+        // Initially all rooms are unused
+        for(int room = 0; room < n; room++) {
+            unusedRooms.push(room);
+        }
+        
+        // 🔄 Process each meeting
+        for(vector<int>& meet : meetings) {
+            int start = meet[0];
+            int end   = meet[1];
+            
+            // ♻️ Free up rooms that are available by meeting start time
+            while(!usedRooms.empty() && usedRooms.top().first <= start) {
+                int room = usedRooms.top().second;
+                usedRooms.pop();
+                unusedRooms.push(room);  // Room becomes available
+            }
+            
+            // 🟢 Case 1: We have available rooms
+            if(!unusedRooms.empty()) {
+                int room = unusedRooms.top();  // Get lowest numbered room
+                unusedRooms.pop();
+                usedRooms.push({end, room});   // Book room until meeting ends
+                roomsUsedCount[room]++;
+            }
+            // 🔴 Case 2: All rooms busy - delay meeting
+            else {
+                // Get room that becomes available earliest
+                int room = usedRooms.top().second;
+                long long endTime = usedRooms.top().first;
+                usedRooms.pop();
+                
+                // Meeting starts when room is free
+                // New end time = room_free_time + meeting_duration
+                usedRooms.push({endTime + (end - start), room});
+                roomsUsedCount[room]++;
+            }
+        }
+        
+        // 🏆 Find room with most meetings (lowest number if tie)
+        int resultRoom = -1;
+        int maxUse = 0;
+        for(int room = 0; room < n; room++) {
+            if(roomsUsedCount[room] > maxUse) {
+                maxUse = roomsUsedCount[room];
+                resultRoom = room;
+            }
+        }
+        
+        return resultRoom;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Example 1: n = 2, meetings = [[0,10],[1,5],[2,7],[3,4]]
+
+Initial State:
+    Rooms: 0, 1 (both available)
+    Room usage: [0, 0]
+
+Step 1: Meeting [0, 10]
+    Start: 0, End: 10
+    Available: Room 0, Room 1
+    ✅ Assign Room 0 (lowest available)
+    Room 0 busy until time 10
+    Usage: [1, 0]
+
+Step 2: Meeting [1, 5]
+    Start: 1, End: 5
+    Available: Room 1 (Room 0 busy until 10)
+    ✅ Assign Room 1
+    Room 1 busy until time 5
+    Usage: [1, 1]
+
+Step 3: Meeting [2, 7]
+    Start: 2, End: 7
+    Available: None (Room 0→10, Room 1→5)
+    Room 1 frees first (at time 5)
+    ⏰ Delay meeting to time 5
+    Duration: 7-2 = 5, so ends at 5+5 = 10
+    ✅ Assign Room 1 (5→10)
+    Usage: [1, 2]
+
+Step 4: Meeting [3, 4]
+    Start: 3, End: 4
+    Available: None (Room 0→10, Room 1→10)
+    Both free at same time (10), pick Room 0 (lower)
+    ⏰ Delay meeting to time 10
+    Duration: 4-3 = 1, so ends at 10+1 = 11
+    ✅ Assign Room 0 (10→11)
+    Usage: [2, 2]
+
+Final Usage: [2, 2] → Tie! Return Room 0 (lower number)
+
+Output: 0
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Example 2: n = 3, meetings = [[1,20],[2,10],[3,5],[4,9],[6,8]]
+
+Initial: Rooms 0,1,2 available
+
+[1,20]  → Room 0 (1→20)    Usage: [1,0,0]
+[2,10]  → Room 1 (2→10)    Usage: [1,1,0]
+[3,5]   → Room 2 (3→5)     Usage: [1,1,1]
+[4,9]   → Room 2 free at 5 (4→9 delayed to 5→10)  Usage: [1,1,2]
+[6,8]   → Room 1 free at 10 (6→8 delayed to 10→12) Usage: [1,2,2]
+
+Final: [1,2,2] → Room 1 has most (tie with 2, return lower)
+
+Output: 1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SOLUTION 1 (Array Simulation):
+⏰ Time Complexity:  O(m log m + m*n)
+   └─ O(m log m): Sort meetings
+   └─ O(m*n): For each meeting, iterate through n rooms
+   └─ O(n): Find result room
+   
+💾 Space Complexity: O(n)
+   └─ Two arrays of size n
+   └─ Sorting space: O(log m)
+
+SOLUTION 2 (Priority Queue):
+⏰ Time Complexity:  O(m log m + m log n)
+   └─ O(m log m): Sort meetings
+   └─ O(m log n): Each meeting does heap operations (push/pop)
+   └─ O(n): Find result room
+   
+💾 Space Complexity: O(n)
+   └─ Two heaps combined store at most n rooms
+   └─ Usage count array: O(n)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Core Idea: Greedy room assignment
+   • Always prefer available rooms over delaying
+   • Always choose lowest numbered room when multiple available
+   • Delayed meetings keep original duration
+
+🔑 Critical Observations:
+   • Sorting meetings by start time is essential
+   • Need to track when each room becomes free
+   • Use long long for times (meetings can stack up)
+   • Ties resolved by room number, not usage count order
+
+⚠️ Edge Cases Handled:
+   • All meetings fit without delay
+   • All meetings must be delayed
+   • Multiple rooms free at same time
+   • Tie in usage count between rooms
+
+🎯 Why Priority Queue is Better:
+   • Avoid O(n) scan for each meeting
+   • Automatically maintains lowest room number
+   • Efficiently tracks earliest available room
+   • Scales better with large n
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 State Transitions (Solution 2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For Each Meeting:
+
+1. Check usedRooms heap:
+   └─ Free rooms that end ≤ meeting start
+   └─ Move them to unusedRooms heap
+
+2. Assign Meeting:
+   ├─ If unusedRooms NOT empty:
+   │  └─ Pop lowest numbered room
+   │  └─ Push {meeting_end, room} to usedRooms
+   │
+   └─ Else (all busy):
+      └─ Pop earliest ending room from usedRooms
+      └─ Calculate delayed end: room_end + duration
+      └─ Push back to usedRooms
+
+3. Update room usage count
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Visual Example Trace (Solution 2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+n = 2, meetings = [[0,10],[1,5],[2,7],[3,4]]
+
+Time    Meeting   unusedRooms   usedRooms          Action           Usage
+────────────────────────────────────────────────────────────────────────────
+Start     -       [0,1]         []                 Init             [0,0]
+  0     [0,10]    [1]           [(10,0)]          Assign R0         [1,0]
+  1     [1,5]     []            [(5,1),(10,0)]    Assign R1         [1,1]
+  2     [2,7]     []            [(5,1),(10,0)]    Delay→R1(5→10)    [1,2]
+  3     [3,4]     []            [(10,0),(10,1)]   Delay→R0(10→11)   [2,2]
+
+Result: Room 0 (tie, return lowest)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔄 Comparison: Solution 1 vs Solution 2
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Aspect              Solution 1              Solution 2
+────────────────────────────────────────────────────────────────────────────
+Time Complexity     O(m*n)                  O(m log n) ⭐
+Space Complexity    O(n)                    O(n)
+Implementation      Simpler                 More complex
+Room Search         Linear scan             Heap pop
+Best For            Small n                 Large n or m
+Optimization        None                    Heap-based ⭐
+
+Recommendation: Use Solution 2 for optimal performance, especially with
+                large inputs. Solution 1 is good for understanding logic.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Common Pitfalls to Avoid
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Forgetting to sort meetings by start time
+❌ Using int instead of long long for times (overflow!)
+❌ Not preserving meeting duration when delaying
+❌ Checking availability wrong (should be ≤ not <)
+❌ Returning highest usage room instead of checking ties properly
+❌ Not initializing all rooms as unused in heap solution
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
