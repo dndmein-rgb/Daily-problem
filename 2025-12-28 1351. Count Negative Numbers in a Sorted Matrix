@@ -1,0 +1,492 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 28, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 1351. Count Negative Numbers in a Sorted Matrix
+📌 Link: https://leetcode.com/problems/count-negative-numbers-in-a-sorted-matrix/
+🏷️ Difficulty: Easy
+🏆 Topics: Array, Binary Search, Matrix, Staircase Search
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- m x n matrix grid
+- Each row is sorted in non-increasing order
+- Each column is sorted in non-increasing order
+
+Goal:
+- Count the number of negative numbers in the matrix
+
+Key Properties:
+- Rows: left to right, values decrease (or stay same)
+- Columns: top to bottom, values decrease (or stay same)
+- If grid[i][j] < 0, all elements below and to the right are also negative
+
+Example:
+  grid = [[4,  3,  2, -1],
+          [3,  2,  1, -1],
+          [1,  1, -1, -2],
+          [-1,-1,-2, -3]]
+  
+  Negative numbers: -1, -1, -1, -1, -1, -2, -2, -3
+  Answer: 8
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach: Staircase Search
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Start from top-right corner and move like climbing stairs
+
+Key Insight:
+- Start at top-right corner (row=0, col=m-1)
+- If current element is negative:
+  → All elements below it in same column are also negative
+  → Count them all: (n - row) negatives
+  → Move left (col--)
+- If current element is non-negative:
+  → Move down (row++)
+- Continue until out of bounds
+
+Why This Works:
+- Matrix is sorted both ways
+- Top-right position allows binary decision:
+  * Negative? → entire column below is negative
+  * Non-negative? → need to check next row
+- Similar to searching in a sorted 2D matrix
+
+Algorithm:
+1️⃣ Start at top-right: row = 0, col = m-1
+2️⃣ While in bounds (row < n && col >= 0):
+   • If grid[row][col] < 0:
+     - Add (n - row) to count (all elements below)
+     - Move left: col--
+   • Else:
+     - Move down: row++
+3️⃣ Return count
+
+Visualization (Staircase Pattern):
+  Start → [4,  3,  2, -1] ← Found negative!
+          [3,  2,  1, -1]    Count 4 elements
+          [1,  1, -1, -2]    Move left
+          [-1,-1,-2, -3]
+          
+          [4,  3,  2, -1]
+          [3,  2,  1, -1] ← Found negative!
+          [1,  1, -1, -2]    Count 3 elements
+          [-1,-1,-2, -3]     Move left
+          
+  And so on...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: grid = [[4, 3, 2, -1],
+               [3, 2, 1, -1],
+               [1, 1,-1, -2],
+               [-1,-1,-2,-3]]
+
+Step-by-Step Execution:
+
+Initial State:
+  row = 0, col = 3, count = 0
+  
+Iteration 1:
+  Position: grid[0][3] = -1 ✅ (negative)
+  Action: count += (4 - 0) = 4
+  Move: col-- → col = 2
+  State: row=0, col=2, count=4
+  
+  Matrix view:
+  [4,  3,  2,  X] ← counted
+  [3,  2,  1,  X] ← counted
+  [1,  1, -1,  X] ← counted
+  [-1,-1,-2,  X] ← counted
+
+Iteration 2:
+  Position: grid[0][2] = 2 ❌ (non-negative)
+  Action: row++ → row = 1
+  State: row=1, col=2, count=4
+
+Iteration 3:
+  Position: grid[1][2] = 1 ❌ (non-negative)
+  Action: row++ → row = 2
+  State: row=2, col=2, count=4
+
+Iteration 4:
+  Position: grid[2][2] = -1 ✅ (negative)
+  Action: count += (4 - 2) = 2
+  Move: col-- → col = 1
+  State: row=2, col=1, count=6
+  
+  Matrix view:
+  [4,  3,  2, -1]
+  [3,  2,  1, -1]
+  [1,  1,  X, -2] ← counted
+  [-1,-1,  X, -3] ← counted
+
+Iteration 5:
+  Position: grid[2][1] = 1 ❌ (non-negative)
+  Action: row++ → row = 3
+  State: row=3, col=1, count=6
+
+Iteration 6:
+  Position: grid[3][1] = -1 ✅ (negative)
+  Action: count += (4 - 3) = 1
+  Move: col-- → col = 0
+  State: row=3, col=0, count=7
+  
+  Matrix view:
+  [4,  3,  2, -1]
+  [3,  2,  1, -1]
+  [1,  1, -1, -2]
+  [-1,  X, -2, -3] ← counted
+
+Iteration 7:
+  Position: grid[3][0] = -1 ✅ (negative)
+  Action: count += (4 - 3) = 1
+  Move: col-- → col = -1
+  State: row=3, col=-1, count=8
+  
+  Matrix view:
+  [4,  3,  2, -1]
+  [3,  2,  1, -1]
+  [1,  1, -1, -2]
+  [ X, -1, -2, -3] ← counted
+
+Exit Loop: col < 0
+
+Final Answer: 8 negative numbers
+
+Path Visualization (Staircase):
+  Start
+    ↓
+  [4,  3,  2, -1] → Found! Count 4, move ←
+  [3,  2,  1↓-1]
+  [1,  1↓-1, -2] → Found! Count 2, move ←
+  [-1↓-1, -2, -3] → Found! Count 1, move ←
+     ↓
+   Found! Count 1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity:  O(n + m)
+   └─ Start at top-right corner
+   └─ Each iteration moves either:
+      • Down (row++) → max n moves
+      • Left (col--) → max m moves
+   └─ Total moves ≤ n + m
+   └─ Much better than O(n×m) brute force!
+   
+💾 Space Complexity: O(1)
+   └─ Only using constant variables: row, col, count
+   └─ No extra data structures needed
+   └─ In-place traversal
+
+Comparison with Other Approaches:
+┌──────────────────┬─────────────┬──────────────┐
+│    Approach      │    Time     │    Space     │
+├──────────────────┼─────────────┼──────────────┤
+│ Brute Force      │   O(n×m)    │    O(1)      │
+│ Binary Search    │ O(n log m)  │    O(1)      │
+│ Staircase Search │   O(n+m)    │    O(1)      │ ← Optimal!
+└──────────────────┴─────────────┴──────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    int countNegatives(vector<vector<int>>& grid) {
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Step 1: Get matrix dimensions
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        int n = grid.size();       // number of rows
+        int m = grid[0].size();    // number of columns
+        int count = 0;             // count of negative numbers
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Step 2: Start from top-right corner
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        int row = 0;           // start at first row
+        int col = m - 1;       // start at last column
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Step 3: Staircase search
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        while (row <= n - 1 && col >= 0) {
+            
+            if (grid[row][col] < 0) {
+                // ✅ Found negative number!
+                // All elements below in this column are also negative
+                // Count them: (n - row) elements from current row to end
+                count += n - row;
+                
+                // Move left to check previous column
+                col--;
+                
+            } else {
+                // ❌ Current element is non-negative
+                // Need to check next row down
+                row++;
+            }
+        }
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Step 4: Return total count
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        return count;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Staircase Pattern:
+   - Named because the path looks like stairs
+   - Start top-right, move down-left
+   - Each step eliminates either a row or column
+   - Classic technique for sorted 2D matrices
+
+🔑 Why Top-Right?
+   - Allows binary decision at each step
+   - Alternative: start bottom-left (symmetric)
+   - Cannot start top-left or bottom-right (no clear decision)
+
+⚡ Optimization Over Brute Force:
+   - Brute force: check every element → O(n×m)
+   - Staircase: eliminate row or column each step → O(n+m)
+   - For 100×100 matrix: 10,000 vs 200 operations!
+
+🎯 Matrix Property Exploitation:
+   - Sorted rows: values decrease left→right
+   - Sorted columns: values decrease top→bottom
+   - Once negative found: all below are negative
+   - This property enables O(n+m) solution
+
+⚠️ Edge Cases:
+   - All elements negative → count all (n×m)
+   - All elements non-negative → count = 0
+   - Single row or single column matrix
+   - Matrix with only one element
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Visual Comparison of Approaches
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Approach 1: Brute Force O(n×m)
+┌─────────────────────────┐
+│ → → → → │ Check every
+│ → → → → │ single cell
+│ → → → → │ in sequence
+│ → → → → │
+└─────────────────────────┘
+
+Approach 2: Binary Search per Row O(n log m)
+┌─────────────────────────┐
+│ → BS → │ Binary search
+│ → BS → │ in each row
+│ → BS → │ to find first
+│ → BS → │ negative
+└─────────────────────────┘
+
+Approach 3: Staircase Search O(n+m) ⭐
+┌─────────────────────────┐
+│        ↓            Start here
+│        ↓     ←      Move like
+│   ↓    ←            climbing
+│   ↓                 stairs!
+└─────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Detailed Example: Small Matrix
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: grid = [[3, 2],
+               [1, 0]]
+
+Step 1: row=0, col=1, count=0
+  Check grid[0][1] = 2 (non-negative)
+  Move down: row=1
+  
+Step 2: row=1, col=1, count=0
+  Check grid[1][1] = 0 (non-negative)
+  Move down: row=2
+  
+Step 3: row=2 (out of bounds)
+  Exit loop
+  
+Answer: 0 negative numbers ✅
+
+Another Example: All Negative
+Input: grid = [[-1, -2],
+               [-3, -4]]
+
+Step 1: row=0, col=1, count=0
+  Check grid[0][1] = -2 (negative!)
+  Count += (2 - 0) = 2
+  Move left: col=0
+  
+Step 2: row=0, col=0, count=2
+  Check grid[0][0] = -1 (negative!)
+  Count += (2 - 0) = 2
+  Move left: col=-1
+  
+Step 3: col=-1 (out of bounds)
+  Exit loop
+  
+Answer: 4 negative numbers ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Alternative Approaches
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Approach 1: Start from Bottom-Left (Symmetric)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+int row = n - 1, col = 0;
+while (row >= 0 && col < m) {
+    if (grid[row][col] < 0) {
+        count += m - col;  // count all to the right
+        row--;             // move up
+    } else {
+        col++;             // move right
+    }
+}
+
+Approach 2: Binary Search on Each Row
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+for (int i = 0; i < n; i++) {
+    // Binary search to find first negative in row i
+    int left = 0, right = m;
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        if (grid[i][mid] < 0) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    count += m - left;  // all from left to end are negative
+}
+// Time: O(n log m), still good but slower than O(n+m)
+
+Approach 3: Brute Force (Baseline)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+for (int i = 0; i < n; i++) {
+    for (int j = 0; j < m; j++) {
+        if (grid[i][j] < 0) {
+            count++;
+        }
+    }
+}
+// Time: O(n×m), simple but inefficient
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 Why This is "Easy"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ✅ Clear pattern to exploit (sorted matrix)
+2. ✅ Simple two-pointer technique
+3. ✅ Straightforward logic (only 2 decisions)
+4. ✅ No complex data structures needed
+5. ✅ Easy to visualize and verify
+
+However, recognizing the staircase pattern requires insight!
+
+Harder variations might involve:
+- Matrix not fully sorted
+- Finding kth negative number
+- Counting numbers in a range
+- 2D range queries with updates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Related Problems
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Similar staircase search pattern:
+- 240. Search a 2D Matrix II (exact staircase pattern!)
+- 378. Kth Smallest Element in a Sorted Matrix
+- 74. Search a 2D Matrix
+- 1337. The K Weakest Rows in a Matrix
+
+Similar counting problems:
+- 2529. Maximum Count of Positive Integer and Negative Integer
+- 1380. Lucky Numbers in a Matrix
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Learning Points
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ✅ Staircase search technique for sorted 2D matrices
+2. ✅ Exploiting matrix properties for optimization
+3. ✅ Two-pointer approach in 2D space
+4. ✅ Reducing O(n×m) to O(n+m)
+5. ✅ Counting without explicitly visiting all elements
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 Interview Tips
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If asked this in interview:
+
+1. **Clarify the sorting order**:
+   "Just to confirm, rows decrease left to right, and columns 
+    decrease top to bottom, correct?"
+
+2. **Start with brute force**:
+   "I could check every cell in O(n×m), but let me think if 
+    we can do better..."
+
+3. **Recognize the pattern**:
+   "Since the matrix is sorted both ways, I can use a staircase 
+    search starting from the top-right corner."
+
+4. **Explain the intuition**:
+   "If current element is negative, all elements below it are 
+    also negative due to column sorting. If non-negative, 
+    I need to check the next row."
+
+5. **State complexity upfront**:
+   "This will run in O(n+m) time with O(1) space."
+
+6. **Walk through example**:
+   Actually trace through the algorithm on a small matrix
+
+7. **Mention alternatives**:
+   "I could also use binary search on each row for O(n log m), 
+    but staircase search is optimal here."
+
+Good answer structure:
+1. Clarify problem
+2. Mention brute force
+3. Identify pattern (sorted matrix)
+4. Propose staircase search
+5. Explain why it works
+6. Code cleanly
+7. Test with example
+8. State complexity
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 Key Takeaway
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When you see a SORTED 2D MATRIX, think STAIRCASE SEARCH!
+
+Start from a corner where you can make binary decisions:
+- Top-right: go left or down
+- Bottom-left: go right or up
+
+This pattern appears in many problems and is a key technique
+to recognize for efficient 2D matrix problems.
+
+Time complexity: O(n + m) instead of O(n × m) 🚀
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
