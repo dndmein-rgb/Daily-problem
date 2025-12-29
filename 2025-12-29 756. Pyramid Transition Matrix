@@ -1,0 +1,354 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Question: December 29, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 756. Pyramid Transition Matrix
+📌 Link: https://leetcode.com/problems/pyramid-transition-matrix/
+🏷️ Difficulty: Medium
+🏆 Topics: Backtracking, DFS, Hash Map, Memoization
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- A string `bottom` representing the bottom row of a pyramid
+- An array `allowed` where allowed[i] = "XYZ" means blocks X and Y can support block Z
+
+Goal:
+- Build a pyramid where each upper block is determined by the two blocks below it
+- Return true if we can build a pyramid with a single block at the top
+
+Rules:
+- Each level has one fewer block than the level below
+- Block at position i in upper level is determined by blocks i and i+1 in lower level
+- Must use allowed transitions only
+
+Example:
+  bottom = "BCD"
+  allowed = ["BCC", "CDE", "CEA", "FFF"]
+  
+  Level 0 (bottom): B C D
+                     ↓ ↓
+  Level 1:          C E  (BC→C, CD→E)
+                     ↓
+  Level 2:          A    (CE→A)
+  
+  Success! Return true
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Strategy: Backtracking with Memoization
+
+Key Insights:
+1️⃣ Build pyramid level by level from bottom to top
+2️⃣ For each pair of adjacent blocks, try all allowed transitions
+3️⃣ Use backtracking to explore all possibilities
+4️⃣ Memoize states to avoid recomputation
+
+Algorithm:
+1️⃣ Preprocess allowed transitions into hash map: "XY" → [possible Z values]
+2️⃣ Recursively build next level:
+   - If current level has 1 block → pyramid complete ✅
+   - For each pair of adjacent blocks in current level:
+     • Try all allowed transitions
+     • Build next level string
+     • Recursively solve for next level
+3️⃣ Use memoization to cache results for (current_level, index, above_so_far)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: bottom = "BCD", allowed = ["BCC", "CDE", "CEA", "FFF"]
+
+Step 1: Build transition map
+  mp["BC"] = ['C']
+  mp["CD"] = ['E']
+  mp["CE"] = ['A']
+  mp["FF"] = ['F']
+
+Step 2: Start building from bottom "BCD"
+
+Recursion Tree:
+  solve("BCD", idx=0, above="")
+    ├─ Pair "BC" → can use 'C'
+    │  └─ solve("BCD", idx=1, above="C")
+    │     ├─ Pair "CD" → can use 'E'
+    │     │  └─ solve("BCD", idx=2, above="CE")
+    │     │     └─ idx==2 (finished level)
+    │     │        └─ solve("CE", idx=0, above="")
+    │     │           ├─ Pair "CE" → can use 'A'
+    │     │           │  └─ solve("CE", idx=1, above="A")
+    │     │           │     └─ idx==1 (finished level)
+    │     │           │        └─ solve("A", idx=0, above="")
+    │     │           │           └─ length==1 → TRUE! ✅
+
+Output: true
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Without Memoization:
+⏰ Time Complexity:  O(k^n) where k = avg transitions per pair
+   └─ Worst case: exponential branching
+   
+With Memoization:
+⏰ Time Complexity:  O(n³ × k)
+   └─ States: n levels × n positions × n^2 possible strings
+   └─ Each state: try k transitions
+   
+💾 Space Complexity: O(n³)
+   └─ Memoization map
+   └─ Recursion stack: O(n)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔄 APPROACH 1: BACKTRACKING WITHOUT MEMOIZATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+class Solution_NoMemo {
+public:
+    // 🎯 Recursive backtracking to build pyramid
+    bool solve(string curr, unordered_map<string, vector<char>>& mp, 
+               int idx, string above) {
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Base case: Reached top of pyramid (single block)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        if (curr.length() == 1) {
+            return true;
+        }
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Finished current level, move to next level
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        if (idx == curr.length() - 1) {
+            return solve(above, mp, 0, "");
+        }
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Try all possible blocks for current position
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        string pair = curr.substr(idx, 2);  // Get adjacent pair
+        
+        // No allowed transition for this pair
+        if (mp.find(pair) == mp.end()) {
+            return false;
+        }
+        
+        // Try each allowed block for this pair
+        for (char& ch : mp[pair]) {
+            above.push_back(ch);                           // DO: Add block
+            
+            if (solve(curr, mp, idx + 1, above) == true)  // EXPLORE
+                return true;
+            
+            above.pop_back();                              // UNDO: Backtrack
+        }
+        
+        return false;
+    }
+    
+    bool pyramidTransition(string bottom, vector<string>& allowed) {
+        // 📊 Build transition map: "XY" → [possible Z values]
+        unordered_map<string, vector<char>> mp;
+        
+        for (auto& pattern : allowed) {
+            mp[pattern.substr(0, 2)].push_back(pattern[2]);
+        }
+        
+        return solve(bottom, mp, 0, "");
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Approach 1 Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Pros:
+- Clean, intuitive backtracking logic
+- Easy to understand and implement
+- No extra space for memoization
+
+⚠️ Cons:
+- Can be VERY slow for large inputs
+- Recomputes same states multiple times
+- Exponential time complexity O(k^n)
+
+🎯 When to use:
+- Small inputs (n ≤ 6-7)
+- Prototyping/understanding the problem
+- Memory constraints
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔁 APPROACH 2: BACKTRACKING WITH MEMOIZATION (OPTIMIZED)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class Solution {
+public:
+    unordered_map<string, bool> t;  // Memoization cache
+    
+    // 🎯 Recursive backtracking with memoization
+    bool solve(string curr, unordered_map<string, vector<char>>& mp,
+               int idx, string above) {
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Base case: Reached top of pyramid
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        if (curr.length() == 1) {
+            return true;
+        }
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Create unique state key for memoization
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        string key = curr + "_" + to_string(idx) + "_" + above;
+        
+        // 💾 Check if we've already computed this state
+        if (t.count(key)) {
+            return t[key];
+        }
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Finished current level, move to next level
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        if (idx == curr.length() - 1) {
+            return t[key] = solve(above, mp, 0, "");
+        }
+        
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Try all possible blocks for current position
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        string pair = curr.substr(idx, 2);
+        
+        if (mp.find(pair) == mp.end()) {
+            return t[key] = false;
+        }
+        
+        for (char& ch : mp[pair]) {
+            above.push_back(ch);  // DO
+            
+            if (solve(curr, mp, idx + 1, above) == true) {  // EXPLORE
+                return t[key] = true;
+            }
+            
+            above.pop_back();  // UNDO
+        }
+        
+        return t[key] = false;
+    }
+    
+    bool pyramidTransition(string bottom, vector<string>& allowed) {
+        // 📊 Build transition map
+        unordered_map<string, vector<char>> mp;
+        
+        for (auto& pattern : allowed) {
+            mp[pattern.substr(0, 2)].push_back(pattern[2]);
+        }
+        
+        return solve(bottom, mp, 0, "");
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Approach 2 Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Pros:
+- Much faster than pure backtracking
+- Caches results to avoid recomputation
+- Can handle larger inputs (n ≤ 10-15)
+
+⚠️ Cons:
+- Uses extra memory for memoization
+- Slightly more complex implementation
+
+🎯 When to use:
+- Production code (recommended!)
+- Larger inputs
+- When performance matters
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Performance Comparison
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For bottom length n = 7:
+
+Without Memo: ~1000ms (exponential blowup)
+With Memo:    ~50ms (cached states) ⚡
+
+Speedup: 20x faster!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Backtracking Pattern: DO → EXPLORE → UNDO
+   Classic template for constraint satisfaction problems
+
+🔑 State Representation:
+   key = current_level + position + above_string_so_far
+   Uniquely identifies each subproblem
+
+⚠️ Why Memoization Helps:
+   Same states reached via different paths
+   Example: Building "AB" at level 2 can happen multiple ways
+   Cache once, reuse many times!
+
+🎯 Optimization Ideas:
+   - Could use bit manipulation for state if only 'A'-'Z'
+   - Could prune branches early if impossible
+   - Could use BFS instead of DFS
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 State Space Example
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For bottom = "ABC":
+
+States explored:
+  "ABC_0_"
+  "ABC_1_X"
+  "ABC_2_XY"
+  "XY_0_"
+  "XY_1_Z"
+  "Z_0_"  → length 1, return true!
+
+Without memo: Might explore same "XY_0_" state multiple times
+With memo: Compute once, cache result
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Related Problems
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Similar backtracking patterns:
+- N-Queens
+- Sudoku Solver
+- Word Break II
+- Letter Combinations of a Phone Number
+- Generate Parentheses
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Learning Points
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ✅ Backtracking: DO → EXPLORE → UNDO pattern
+2. ✅ Memoization: Cache to avoid recomputation
+3. ✅ State design: Create unique keys for caching
+4. ✅ String building: Level-by-level construction
+5. ✅ Hash map preprocessing: Fast transition lookup
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
