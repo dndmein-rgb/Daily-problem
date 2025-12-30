@@ -1,0 +1,133 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Problem: August 9, 2024 (LeetCode Daily)
+📅 Date: December 30, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 840. Magic Squares In Grid
+📌 Link: https://leetcode.com/problems/magic-squares-in-grid/
+🏷️ Difficulty: Medium
+🏆 Topics: Array, Hash Table, Math, Matrix
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- An $m \times n$ grid of integers.
+
+Goal:
+- Count how many $3 \times 3$ "magic square" subgrids are present.
+- A magic square is a $3 \times 3$ grid filled with distinct numbers from 1 to 9 such that each row, column, and both diagonals all have the same sum.
+
+Key Magic Square Properties:
+1. Must contain distinct digits from 1 to 9.
+2. The sum of all numbers 1-9 is 45. Since there are 3 rows, each row sum must be $45 / 3 = 15$.
+3. The central element of any $3 \times 3$ magic square must be **5**.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **Sliding Window on Grid**:
+   - Iterate through every possible top-left corner $(r, c)$ such that a $3 \times 3$ grid can exist starting from there ($0 \leq r < n-2$ and $0 \leq c < m-2$).
+
+2. **Validation (isMagic function)**:
+   - **Center Check**: Optimization—if `grid[r+1][c+1] != 5`, it cannot be a magic square.
+   - **Distinctness Check**: Use a boolean array (size 10) to ensure all numbers are distinct and between 1-9.
+   - **Sum Check**: Calculate the sum of 3 rows, 3 columns, and 2 diagonals. All must equal 15.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input Grid:
+4 3 8 4
+9 5 1 9
+2 7 6 2
+
+Subgrid (0,0):
+4 3 8  -> Sum: 15
+9 5 1  -> Sum: 15
+2 7 6  -> Sum: 15
+(Center is 5, all numbers 1-9 present) ✅ Magic!
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity: O(R * C)
+   └─ We iterate through each cell once as a potential top-left corner.
+   └─ The `isMagic` check is O(1) because it always processes exactly 9 cells.
+   
+💾 Space Complexity: O(1)
+   └─ Only a small boolean array and constant variables are used.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    bool isMagic(vector<vector<int>>& g, int r, int c) {
+        // Optimization: The center of any 3x3 magic square must be 5
+        if (g[r+1][c+1] != 5) return false;
+
+        bool seen[10] = {false};
+        for (int i = r; i < r + 3; i++) {
+            for (int j = c; j < c + 3; j++) {
+                int v = g[i][j];
+                if (v < 1 || v > 9 || seen[v]) return false;
+                seen[v] = true;
+            }
+        }
+
+        // Check Row Sums
+        for (int i = 0; i < 3; i++) {
+            if (g[r+i][c] + g[r+i][c+1] + g[r+i][c+2] != 15) return false;
+        }
+
+        // Check Column Sums
+        for (int j = 0; j < 3; j++) {
+            if (g[r][c+j] + g[r+1][c+j] + g[r+2][c+j] != 15) return false;
+        }
+
+        // Check Diagonal Sums
+        if (g[r][c] + g[r+1][c+1] + g[r+2][c+2] != 15) return false;
+        if (g[r+2][c] + g[r+1][c+1] + g[r][c+2] != 15) return false;
+
+        return true;
+    }
+
+    int numMagicSquaresInside(vector<vector<int>>& grid) {
+        int n = grid.size();
+        int m = grid[0].size();
+        if (n < 3 || m < 3) return 0;
+
+        int count = 0;
+        for (int i = 0; i + 2 < n; i++) {
+            for (int j = 0; j + 2 < m; j++) {
+                if (isMagic(grid, i, j))
+                    count++;
+            }
+        }
+        return count;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Why is the center always 5?
+   - There are 4 lines passing through the center (horizontal, vertical, 2 diagonals).
+   - Each line sums to 15. 
+   - $4 \times 15 = 60$.
+   - In these 4 lines, the center is counted 4 times, and every other number in the grid is counted once.
+   - $(\text{Sum of all 1-9}) + 3 \times (\text{Center}) = 60$
+   - $45 + 3 \times (\text{Center}) = 60 \implies 3 \times (\text{Center}) = 15 \implies \text{Center} = 5$.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
