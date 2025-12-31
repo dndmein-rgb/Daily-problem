@@ -1,0 +1,155 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Problem: Hard
+📅 Date: December 31, 2025
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 1970. Last Day Where You Can Still Cross
+📌 Link: https://leetcode.com/problems/last-day-where-you-can-still-cross/
+🏷️ Difficulty: Hard
+🏆 Topics: Binary Search, BFS/DFS, Matrix
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- A $row \times col$ grid that starts completely dry (all 0s).
+- A list of `cells` representing the order in which specific coordinates turn into water (1s) day by day.
+
+Goal:
+- Find the **latest day** you can still walk from the top row to the bottom row by only stepping on dry cells.
+- Movement is allowed in 4 directions (Up, Down, Left, Right).
+
+Key Insight:
+- This is a "monotonic" problem: if you can cross on day $D$, you can definitely cross on any day $d < D$.
+- This property allows us to use **Binary Search on the Answer (Days)**.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **Binary Search on Days**:
+   - The range for binary search is `[1, cells.size()]`.
+   - For a chosen `mid` day, we check if it is still possible to cross.
+
+2. **The `canCross` Check (BFS/DFS)**:
+   - Construct a grid and fill it with water based on the first `mid` cells in the input.
+   - Run a traversal (DFS or BFS) starting from every dry cell in the **top row** (row 0).
+   - If any traversal reaches the **bottom row** (row $ROW-1$), return `true`.
+
+3. **Critical Implementation Details**:
+   - **Indexing**: Input `cells` are 1-indexed. Use `cells[i][0] - 1` for 0-indexed logic.
+   - **Visited Management**: Mark cells as visited by setting `grid[i][j] = 1` during DFS to prevent redundant paths and stack overflow.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input: row = 2, col = 2, cells = [[1,1],[2,1],[1,2],[2,2]]
+
+Binary Search Process:
+- **Low=1, High=4, Mid=2**: 
+  - Water at (0,0) and (1,0). 
+  - Path: (0,1) -> (1,1) exists! ✅
+  - `lastDay = 2`, move `low = 3`.
+- **Low=3, High=4, Mid=3**:
+  - Water at (0,0), (1,0), (0,1).
+  - No path from top row to bottom row. ❌
+  - Move `high = 2`.
+
+Final Result: 2
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity: O(log(R*C) * (R*C))
+   └─ Binary search takes O(log(N)) where N is total cells.
+   └─ For each check, DFS traverses the grid in O(R*C).
+   
+💾 Space Complexity: O(R * C)
+   └─ For the temporary grid and recursion stack.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    int ROW, COL;
+    vector<vector<int>> directions{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+    bool dfs(vector<vector<int>>& grid, int i, int j) {
+        if (i < 0 || i >= ROW || j < 0 || j >= COL || grid[i][j] == 1)
+            return false;
+
+        if (i == ROW - 1)
+            return true;
+
+        // Mark as visited by turning current dry land into water
+        grid[i][j] = 1;
+
+        for (auto &d : directions) {
+            if (dfs(grid, i + d[0], j + d[1]))
+                return true;
+        }
+        return false;
+    }
+
+    bool canCross(vector<vector<int>>& cells, int day) {
+        vector<vector<int>> grid(ROW, vector<int>(COL, 0));
+
+        for (int i = 0; i < day; i++) {
+            int r = cells[i][0] - 1; 
+            int c = cells[i][1] - 1;
+            grid[r][c] = 1;
+        }
+
+        for (int j = 0; j < COL; j++) {
+            if (grid[0][j] == 0 && dfs(grid, 0, j))
+                return true;
+        }
+        return false;
+    }
+
+    int latestDayToCross(int row, int col, vector<vector<int>>& cells) {
+        ROW = row;
+        COL = col;
+
+        int l = 1, r = cells.size();
+        int lastDay = 0;
+
+        while (l <= r) {
+            int mid = l + (r - l) / 2;
+            if (canCross(cells, mid)) {
+                lastDay = mid;
+                l = mid + 1;
+            } else {
+                r = mid - 1;
+            }
+        }
+        return lastDay;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 Key Insights & Post-Mortem
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Why Binary Search?
+   - The "Latest Day" phrasing is a massive hint for Binary Search on the Answer. 
+     If day X works, all days < X also work.
+
+📝 Personal Mistakes to Remember:
+   - ⚠️ couldn't figure out bs: Whenever you see a threshold (pass/fail) 
+     over a range of values, always test if it's monotonic for Binary Search.
+   - ⚠️ struggled with indexing: LeetCode coordinates are often 1-indexed in 
+     problem descriptions but 0-indexed in code. Always normalize at the start.
+   - ⚠️ missed visited completely: In grid DFS, a visited array (or modifying 
+     the grid in-place) is mandatory to prevent infinite cycles and TLE.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
