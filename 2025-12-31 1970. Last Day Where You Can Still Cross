@@ -118,7 +118,7 @@ public:
         ROW = row;
         COL = col;
 
-        int l = 1, r = cells.size();
+        int l = 1, r = cells.size()-1;
         int lastDay = 0;
 
         while (l <= r) {
