@@ -1,0 +1,91 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Challenge: 66. Plus One
+📅 Date: January 1, 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 66. Plus One
+📌 Link: https://leetcode.com/problems/plus-one/
+🏷️ Difficulty: Easy
+🏆 Topics: Array, Math
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- A large integer represented as an integer array `digits`, where each 
+  `digits[i]` is the $i^{th}$ digit of the integer.
+- The digits are ordered from most significant to least significant.
+
+Goal:
+- Increment the large integer by one and return the resulting array of digits.
+
+Key Insight:
+- We only need to worry about "carrying" the value when a digit is a 9.
+- If the digit is less than 9, we simply add 1 and return.
+- If the digit is 9, it becomes 0, and we move to the next significant digit.
+- If all digits are 9 (e.g., 999), the array becomes 1000.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **Traverse Backwards**: 
+   Start from the last element (least significant digit) and move towards the front.
+
+2. **Handle Non-9 Digits**: 
+   If the current digit is not 9, increment it by 1 and immediately return the array, as no further carries are possible.
+
+3. **Handle 9 Digits**: 
+   If the digit is 9, set it to 0 and continue the loop to the next digit.
+
+4. **Edge Case (All Nines)**: 
+   If the loop finishes, it means every digit was a 9 (like 99 -> 00). In this case, we insert a `1` at the beginning of the vector to represent the final carry.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    vector<int> plusOne(vector<int>& d) {
+        int n = d.size();
+        
+        // Iterate from the last digit to the first
+        for (int i = n - 1; i >= 0; i--) {
+            // If the digit is not 9, increment and return immediately
+            if (d[i] != 9) {
+                d[i] = d[i] + 1;
+                return d;
+            }
+            // If the digit is 9, it becomes 0 and carry moves to the left
+            d[i] = 0;
+        }
+        
+        // Special case: If all digits were 9, the loop finishes (e.g., 999 -> 000)
+        // We need to add a 1 at the front (e.g., 1000)
+        d.insert(d.begin(), 1);
+        return d;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity: O(N)
+   └─ In the worst case (all 9s), we traverse the entire array once.
+   
+💾 Space Complexity: O(1) or O(N)
+   └─ O(1) if we don't count the space for the output array, or O(N) if we 
+      consider the case where we increase the size of the array by 1.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough (digits = [1, 2, 9])
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Start at index 2 (value 9): It's a 9, so set digits[2] = 0.
+2. Move to index 1 (value 2): 2 != 9, so set digits[1] = 2 + 1 = 3.
+3. Return: [1, 3, 0].
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
