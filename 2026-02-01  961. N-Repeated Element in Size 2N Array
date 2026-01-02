@@ -1,0 +1,93 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Challenge: 961. N-Repeated Element in Size 2N Array
+📅 Date: January 2, 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 961. N-Repeated Element in Size 2N Array
+📌 Link: https://leetcode.com/problems/n-repeated-element-in-size-2n-array/
+🏷️ Difficulty: Easy
+🏆 Topics: Array, Hash Table
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- An array `nums` of size $2N$.
+- There are $N+1$ unique elements.
+- Exactly one element is repeated $N$ times.
+
+Goal:
+- Return the element that is repeated $N$ times.
+
+Key Insight:
+- Since $N$ elements out of $2N$ are the same, that specific element must appear very frequently. 
+- In fact, the repeated element must either be adjacent or separated by at most two positions in the array (unless it's a specific case like `[x, y, z, x]`).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach 1: Frequency Counting (Brute Force)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **Count Occurrences**: Use a frequency array or hash map to count how many times each number appears.
+2. **Early Exit**: As soon as any number's count reaching $N$ (or simply becomes $> 1$), return that number.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach 2: Distance Checking (Optimized)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **Pigeonhole Logic**: In a size $2N$ array with $N$ repeated elements, the repeated elements must be close to each other.
+2. **Check Neighbors**: Iterate through the array and check if `nums[i]` is equal to `nums[i+1]` or `nums[i+2]`.
+3. **Edge Case**: If no duplicates are found in the first $n-2$ elements, the duplicate must involve the last element.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+// Solution 1: Frequency Array Approach
+class Solution {
+public:
+    int repeatedNTimes(vector<int>& nums) {
+        vector<int> freq(10001, 0); // Elements are in range [0, 10000]
+        int n = nums.size();
+        for(int num : nums) {
+            freq[num]++;
+            if(freq[num] > 1) return num; // The only repeated element is the answer
+        }
+        return 0;
+    }
+};
+
+// Solution 2: Optimized O(1) Space Approach
+class Solution {
+public:
+    int repeatedNTimes(vector<int>& nums) {
+        int n = nums.size();
+        // Check for the repeated element within a window of 3
+        for(int i = 0; i < n - 2; i++) {
+            if(nums[i] == nums[i+1] || nums[i] == nums[i+2]) return nums[i];
+        }
+        // If not found, the repeated element must be at the very end (e.g., [x, y, z, x])
+        return nums[n-1];
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity: O(N)
+   └─ Both approaches require at most one pass through the array.
+   
+💾 Space Complexity: 
+   └─ Approach 1: O(10000) -> O(1) (Fixed size auxiliary array).
+   └─ Approach 2: O(1) (No extra space used).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough (nums = [1, 2, 3, 3])
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. i = 0: nums[0]=1, nums[1]=2, nums[2]=3. No match.
+2. i = 1: nums[1]=2, nums[2]=3, nums[3]=3. Match found (nums[2] == nums[3]).
+3. Return 3.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
