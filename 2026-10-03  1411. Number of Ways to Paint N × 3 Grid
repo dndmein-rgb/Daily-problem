@@ -1,0 +1,98 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Challenge: 1411. Number of Ways to Paint N × 3 Grid
+📅 Date: January 3, 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 1411. Number of Ways to Paint N × 3 Grid
+📌 Link: https://leetcode.com/problems/number-of-ways-to-paint-n-3-grid/
+🏷️ Difficulty: Hard
+🏆 Topics: Dynamic Programming, Combinatorics
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- An $n \times 3$ grid.
+- Three available colors (Red, Yellow, Green).
+
+Goal:
+- Paint the grid such that no two adjacent cells have the same color.
+- Return the number of ways modulo $10^9 + 7$.
+
+Key Insight:
+- Any valid row can be categorized into two patterns:
+    1. **ABA**: The first and third cells have the same color (e.g., Red-Yellow-Red).
+    2. **ABC**: All three cells have different colors (e.g., Red-Yellow-Green).
+- For $n=1$, there are 6 ways for ABA and 6 ways for ABC (Total 12).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach (Dynamic Programming)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **Identify State Transitions**:
+   - A row of type **ABA** can be followed by:
+     - 3 ABA patterns.
+     - 2 ABC patterns.
+   - A row of type **ABC** can be followed by:
+     - 2 ABA patterns.
+     - 2 ABC patterns.
+
+2. **Transition Equations**:
+   - $ABA_{next} = 3 \cdot ABA_{curr} + 2 \cdot ABC_{curr}$
+   - $ABC_{next} = 2 \cdot ABA_{curr} + 2 \cdot ABC_{curr}$
+
+3. **Iterative Calculation**:
+   - Start with $ABA = 6$ and $ABC = 6$.
+   - Iterate from $2$ to $n$ to update the counts using the transitions above, applying modulo at each step to prevent overflow.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+
+
+class Solution {
+public:
+    int numOfWays(int n) {
+        const int mod = 1e9 + 7;
+        
+        // Initial states for n = 1
+        long long abc = 6; // Pattern where all colors are different (ABC)
+        long long aba = 6; // Pattern where first and third colors match (ABA)
+        
+        for (int i = 2; i <= n; i++) {
+            // Calculate next states based on current patterns
+            long long next_abc = (2 * abc + 2 * aba) % mod;
+            long long next_aba = (2 * abc + 3 * aba) % mod;
+            
+            abc = next_abc;
+            aba = next_aba;
+        }
+        
+        // Total ways is the sum of both patterns at level n
+        return (abc + aba) % mod;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity: O(N)
+   └─ We perform a single loop from 2 to N with constant time operations inside.
+   
+💾 Space Complexity: O(1)
+   └─ We only maintain two variables (abc and aba) regardless of the size of N.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough (n = 2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Start (n=1): aba = 6, abc = 6.
+2. Step (n=2):
+   - next_abc = (2*6 + 2*6) = 24.
+   - next_aba = (2*6 + 3*6) = 30.
+3. Total = (24 + 30) = 54.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
