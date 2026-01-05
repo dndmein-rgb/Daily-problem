@@ -1,0 +1,104 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Challenge: 1975. Maximum Matrix Sum
+📅 Date: January 5, 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 1975. Maximum Matrix Sum
+📌 Link: https://leetcode.com/problems/maximum-matrix-sum/
+🏷️ Difficulty: Medium
+🏆 Topics: Array, Matrix, Greedy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- An $n \times n$ integer `matrix`.
+- You can multiply any two **adjacent** elements by -1.
+
+Goal:
+- Maximize the total sum of the matrix elements after any number of operations.
+
+Key Insight:
+- Multiplying two adjacent elements by -1 allows you to "move" a negative sign 
+  anywhere in the matrix.
+- If two negative signs meet, they cancel out (both become positive).
+- Therefore:
+    1. If the total count of negative numbers is **even**, all negatives can be 
+       eliminated.
+    2. If the total count is **odd**, exactly one negative sign must remain. 
+       To maximize the sum, we leave the negative sign on the element with the 
+       **smallest absolute value**.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach (Greedy Matrix Traversal)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **Calculate Global Properties**:
+   - `sumAbs`: The sum of the absolute values of all elements.
+   - `negs`: The total count of negative numbers in the matrix.
+   - `minAbs`: The smallest absolute value found in the matrix.
+2. **Parity Check**:
+   - If `negs % 2 == 0`: All numbers can be effectively made positive. Return `sumAbs`.
+   - If `negs % 2 != 0`: One value must stay negative. Subtract twice the 
+     smallest absolute value from `sumAbs` (once to remove it from the total 
+     sum, and once to account for its negative contribution).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+
+
+class Solution {
+public:
+    long long maxMatrixSum(vector<vector<int>>& matrix) {
+        long long sumAbs = 0;
+        int negs = 0;
+        int minAbs = INT_MAX;
+
+        for (int i = 0; i < matrix.size(); i++) {
+            for (int j = 0; j < matrix[i].size(); j++) {
+                int x = matrix[i][j];
+                
+                // Add absolute value to the potential total
+                sumAbs += abs(x);
+                
+                // Track count of negative signs
+                if (x < 0) {
+                    negs++;
+                }
+                
+                // Track the smallest absolute value to minimize the penalty
+                minAbs = min(minAbs, abs(x));
+            }
+        }
+
+        // If negatives are even, all can be flipped to positive
+        if (negs % 2 == 0) return sumAbs;
+        
+        // If negatives are odd, subtract the smallest element twice
+        return sumAbs - 2LL * minAbs;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity: O(N * M)
+   └─ We visit every cell in the matrix exactly once.
+   
+💾 Space Complexity: O(1)
+   └─ We only use a few variables for summation and tracking.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough (matrix = [[1,-1],[-1,1]])
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. sumAbs = 1+1+1+1 = 4.
+2. negs = 2 (even).
+3. Result = sumAbs = 4.
+(Explanation: Flip the two adjacent -1s to 1s).
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
