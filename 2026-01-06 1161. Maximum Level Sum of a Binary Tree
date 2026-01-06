@@ -1,0 +1,125 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ Daily Challenge: 1161. Maximum Level Sum of a Binary Tree
+📅 Date: January 6, 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 1161. Maximum Level Sum of a Binary Tree
+📌 Link: https://leetcode.com/problems/maximum-level-sum-of-a-binary-tree/
+🏷️ Difficulty: Medium
+🏆 Topics: Tree, Breadth-First Search, Binary Tree
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- The `root` of a binary tree.
+- Root level is 1, children are level 2, and so on.
+
+Goal:
+- Return the smallest level $x$ such that the sum of all node values at level $x$ is maximal.
+
+Key Insight:
+- This is a classic Level-Order Traversal problem. 
+- Using BFS (Breadth-First Search) allows us to process the tree one level at a time.
+- Since we need the *smallest* level in case of a tie, we only update our answer when we find a sum that is **strictly greater** than the current maximum.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach (BFS / Level Order Traversal)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **Initialize Queue**: Start by pushing the `root` into a queue.
+2. **Track Maxima**: 
+   - `maxSum` initialized to `LLONG_MIN` to handle potential negative node values and large sums.
+   - `ansLevel` to store the result level.
+   - `currLevel` to keep track of the current depth (starts at 1).
+3. **Traverse Level-by-Level**:
+   - Get the number of nodes currently in the queue (`q.size()`).
+   - Iterate through these nodes, summing their values and pushing their children into the queue for the next level.
+4. **Update Results**:
+   - Compare the level sum with `maxSum`. 
+   - If `currLevelSum > maxSum`, update `maxSum` and set `ansLevel = currLevel`.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ * int val;
+ * TreeNode *left;
+ * TreeNode *right;
+ * TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ * TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ * TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+
+class Solution {
+public:
+    int maxLevelSum(TreeNode* root) {
+        if (!root) return 0;
+
+        queue<TreeNode*> q;
+        q.push(root);
+
+        // Initialize with very small value to handle negative node values
+        long long maxSum = LLONG_MIN; 
+        int ansLevel = 1;
+        int currLevel = 1;
+
+        while (!q.empty()) {
+            int n = q.size();
+            long long currLevelSum = 0;
+           
+            // Process all nodes at the current level (Standard BFS)
+            for (int i = 0; i < n; i++) {
+                TreeNode* f = q.front();
+                q.pop();
+
+                currLevelSum += f->val;
+
+                if (f->left)
+                    q.push(f->left);
+                if (f->right)
+                    q.push(f->right);
+            }
+
+            // Update answer if we find a sum strictly greater than our current max
+            // This naturally picks the smallest level in case of a tie
+            if (currLevelSum > maxSum) {
+                maxSum = currLevelSum;
+                ansLevel = currLevel;
+            }
+            
+            currLevel++;
+        }
+
+        return ansLevel;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity: O(N)
+   └─ Every node is visited exactly once during the BFS traversal.
+   
+💾 Space Complexity: O(W)
+   └─ The queue holds at most the maximum number of nodes at any level (W). 
+      In the worst case (full binary tree), W ≈ N/2.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough (root = [1, 7, 0, 7, -8])
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Level 1: [1]. Sum = 1. maxSum = 1, ansLevel = 1.
+2. Level 2: [7, 0]. Sum = 7. maxSum = 7, ansLevel = 2.
+3. Level 3: [7, -8]. Sum = -1. maxSum remains 7.
+Final Result: 2.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
