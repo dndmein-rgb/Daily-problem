@@ -1,0 +1,119 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ LeetCode 1339: Maximum Product of Splitted Binary Tree
+📅 Date: January 7, 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 1339. Maximum Product of Splitted Binary Tree
+📌 Link: https://leetcode.com/problems/maximum-product-of-splitted-binary-tree/
+🏷️ Difficulty: Medium
+🏆 Topics: Tree, Depth-First Search, Binary Tree
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- The `root` of a binary tree.
+
+Goal:
+- Split the binary tree into two subtrees by removing exactly one edge such that the product of the sums of the two subtrees is maximized.
+- Return the maximum product modulo $10^9 + 7$.
+
+Key Insight:
+- If we know the total sum of all nodes in the tree ($S$), and we find the sum of any subtree ($s$), removing the edge connecting that subtree to its parent results in two trees with sums $s$ and $(S - s)$.
+- The product is simply $P = s \times (S - s)$.
+- To find the best product, we need to calculate all possible subtree sums.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach (Post-Order DFS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **Calculate Total Sum**: Perform an initial pass (DFS or BFS) to find the sum of all node values in the entire tree.
+2. **Subtree Sum Calculation**: Use a recursive DFS function where each call returns the sum of the subtree rooted at that node.
+3. **Maximize Product**: 
+    - At each node, after calculating its `subSum` (Left child sum + Right child sum + Node value), calculate the product: `subSum * (totalSum - subSum)`.
+    - Update a global `best` variable with the maximum product found.
+4. **Modulo Arithmetic**: Only apply the modulo at the final return statement to avoid incorrect comparisons during the `max()` check.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ * int val;
+ * TreeNode *left;
+ * TreeNode *right;
+ * TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ * TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ * TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    static const int MOD = 1e9 + 7;
+    long long totalSum = 0;
+    long long best = 0;
+
+    // First pass to find the sum of every node in the tree
+    void getTotalSum(TreeNode* node) {
+        if (!node) return;
+        totalSum += node->val;
+        getTotalSum(node->left);
+        getTotalSum(node->right);
+    }
+
+    // Second pass to calculate subtree sums and find the max product
+    long long dfs(TreeNode* node) {
+        if (!node) return 0;
+
+        long long left = dfs(node->left);
+        long long right = dfs(node->right);
+
+        // Sum of the current subtree
+        long long subSum = node->val + left + right;
+
+        // Compare product of (current subtree sum) * (remaining tree sum)
+        best = max(best, subSum * (totalSum - subSum));
+
+        return subSum;
+    }
+
+    int maxProduct(TreeNode* root) {
+        totalSum = 0;
+        best = 0;
+        
+        getTotalSum(root);
+        dfs(root);
+        
+        return best % MOD;
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity: O(N)
+   └─ We visit each node twice (once for total sum, once for product calculation).
+   
+💾 Space Complexity: O(H)
+   └─ H is the height of the tree, representing the maximum depth of the recursion stack. 
+      Worst case (skewed tree) is O(N), best case (balanced tree) is O(log N).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough (root = [1,2,3,4,5,6])
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. totalSum = 1 + 2 + 3 + 4 + 5 + 6 = 21.
+2. Consider removing the edge above node with sum 6:
+   - subSum = 6, remaining = 21 - 6 = 15.
+   - Product = 6 * 15 = 90.
+3. Consider removing the edge above node with value 2 (and children 4, 5):
+   - subSum = 2 + 4 + 5 = 11, remaining = 21 - 11 = 10.
+   - Product = 11 * 10 = 110. (This is the max).
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
