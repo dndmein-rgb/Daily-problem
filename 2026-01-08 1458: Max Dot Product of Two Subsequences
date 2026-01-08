@@ -1,0 +1,108 @@
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗓️ LeetCode 1458: Max Dot Product of Two Subsequences
+📅 Date: January 8, 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Problem: 1458. Max Dot Product of Two Subsequences
+📌 Link: https://leetcode.com/problems/max-dot-product-of-two-subsequences/
+🏷️ Difficulty: Hard
+🏆 Topics: Dynamic Programming, Memoization
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📖 Problem Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Given:
+- Two arrays `nums1` and `nums2`.
+
+Goal:
+- Return the maximum dot product between non-empty subsequences of `nums1` and `nums2` of the same length.
+
+Key Insight:
+- This is a variation of the Longest Common Subsequence (LCS) problem.
+- At any pair of indices $(i, j)$, we have options:
+    1. Multiply $nums1[i]$ and $nums2[j]$ and add it to the best result from the remaining arrays.
+    2. Start a new subsequence with only $nums1[i] \times nums2[j]$.
+    3. Skip $nums1[i]$ and look for a match for $nums2[j]$ later.
+    4. Skip $nums2[j]$ and look for a match for $nums1[i]$ later.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Approach (Dynamic Programming - Top Down)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **State Definition**: Let `t[i][j]` be the max dot product using suffixes `nums1[i...]` and `nums2[j...]`.
+2. **Recursive Choices**:
+    - `value = nums1[i] * nums2[j]`
+    - `take_both = value + solve(i+1, j+1)`: Include both current elements and continue.
+    - `only_value = value`: Include only current elements (handles the "non-empty" constraint).
+    - `skip_nums1 = solve(i+1, j)`
+    - `skip_nums2 = solve(i, j+1)`
+3. **Memoization**: Store results in a 2D array initialized to a very small value (`-1e9`) to handle negative products.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
+class Solution {
+public:
+    int t[501][501];
+    
+    int solve(vector<int>& nums1, vector<int>& nums2, int i, int j) {
+        int n = nums1.size();
+        int m = nums2.size();
+        
+        // Base case: if either array is exhausted, we can't form a product.
+        // Return a very small value to indicate it's not a valid contribution.
+        if (i == n || j == m) return -1e9;
+        
+        if (t[i][j] != -1e9) return t[i][j];
+        
+        int current_val = nums1[i] * nums2[j];
+        
+        // Option 1: Take current pair and add to the best result from subsequent indices
+        int take_both = current_val + solve(nums1, nums2, i + 1, j + 1);
+        
+        // Option 2: Take ONLY current pair (starts a new sequence, useful for negative scenarios)
+        int only_current = current_val;
+        
+        // Option 3: Skip nums1[i]
+        int skip_i = solve(nums1, nums2, i + 1, j);
+        
+        // Option 4: Skip nums2[j]
+        int skip_j = solve(nums1, nums2, i, j + 1);
+
+        return t[i][j] = max({only_current, take_both, skip_i, skip_j});
+    }
+
+    int maxDotProduct(vector<int>& nums1, vector<int>& nums2) {
+        // Initialize memoization table
+        for (int i = 0; i < 501; i++) {
+            for (int j = 0; j < 501; j++) {
+                t[i][j] = -1e9;
+            }
+        }
+        return solve(nums1, nums2, 0, 0);
+    }
+};
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ Complexity Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ Time Complexity: O(N * M)
+   └─ Each state (i, j) is computed only once due to memoization.
+   
+💾 Space Complexity: O(N * M)
+   └─ Used for the 2D memoization table and recursion stack.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Example Walkthrough (nums1 = [2,1,-2], nums2 = [3,0,-6])
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Max product could be 2*3 + (-2)*(-6) = 6 + 12 = 18.
+2. The DP explores picking pairs like (2,3) and (-2,-6) while skipping 0.
+3. Result: 18.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
