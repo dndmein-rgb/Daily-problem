@@ -22,34 +22,38 @@ Find the **minimum** y-coordinate of a horizontal line $y = y_{line}$ such that 
 * **Output**: `1.00000`
 * **Explanation**: Total area is 2. The line $y=1$ leaves area 1 below and area 1 above.
 
-**Example 2:**
-* **Input**: `squares = [[0,0,2],[1,1,1]]`
-* **Output**: `1.16667`
-
 ---
 
 ## 💡 Approach: Binary Search on Answer
 
-The total area below a horizontal line $y = H$ is a **monotonically increasing function** of $H$. This makes the problem perfect for Binary Search.
+The total area below a horizontal line $y = H$ is a **monotonically increasing function**. As the line moves up, the area below it can only increase or stay the same. This monotonicity allows us to use **Binary Search**.
+
+### 1. Visualizing the Split
+The line $y = y_{line}$ can cut through squares, sit above them, or sit below them. We need to sum these partial areas.
 
 
 
-### The Logic
-1. **Define Range**: The line must lie between the lowest $y$ (`y`) and the highest $y$ (`y + l`) across all squares.
-2. **Calculate Total Area**: Sum up $l_i^2$ for all squares.
-3. **Check Function**: For a given `mid_y`, calculate the area of all parts of squares lying below it:
-   - If `mid_y` is above the square: `area += l * l`.
-   - If `mid_y` is below the square: `area += 0`.
-   - If `mid_y` intersects the square: `area += (mid_y - y) * l`.
-4. **Precision**: Since we need a decimal answer, we continue the binary search until the range is sufficiently small (e.g., $10^{-5}$) or for a fixed number of iterations (e.g., 100) to ensure high precision.
+### 2. The `check(mid_y)` Logic
+For every square $i$ with bottom $y_i$ and top $y_i + l_i$:
+* **Case 1: Line is above square** ($y_{line} \ge y_i + l_i$)
+    * Add full area: $l_i \times l_i$.
+* **Case 2: Line cuts through square** ($y_i < y_{line} < y_i + l_i$)
+    * Add partial area: $(y_{line} - y_i) \times l_i$.
+* **Case 3: Line is below square** ($y_{line} \le y_i$)
+    * Add nothing: $0$.
 
 
+
+### 3. Binary Search Range
+* **Low**: The minimum $y$ among all squares.
+* **High**: The maximum $y + l$ among all squares.
+* **Termination**: Since we need a double, we run the loop for a fixed number of iterations (e.g., 100) to guarantee a precision of $10^{-15}$.
 
 ---
 
 ## ⚡ Complexity Analysis
-* **Time Complexity**: $O(N \cdot \log(\frac{Range}{\epsilon}))$ — where $N$ is the number of squares and $\epsilon$ is the required precision.
-* **Space Complexity**: $O(1)$ — Only a few variables are used.
+* **Time Complexity**: $O(N \cdot \log(\text{Range}/\epsilon))$ — We perform $N$ calculations for each of the 100 iterations.
+* **Space Complexity**: $O(1)$ — No extra data structures used.
 
 ---
 **Date Solved**: January 13, 2026
