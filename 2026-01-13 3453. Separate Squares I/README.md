@@ -18,9 +18,22 @@ Find the **minimum** y-coordinate of a horizontal line $y = y_{line}$ such that 
 ### 📝 Examples
 
 **Example 1:**
-* **Input**: `squares = [[0,0,1],[2,2,1]]`
-* **Output**: `1.00000`
-* **Explanation**: Total area is 2. The line $y=1$ leaves area 1 below and area 1 above.
+### 📊 Visual Representation (Example 1)
+**Input**: `squares = [[0,0,1],[2,2,1]]`
+
+```text
+  y ^
+    |
+  3 |       +-------+ <--- top (y+l=3)
+    |       |  SQ 2 |
+  2 |       +-------+ <--- bottom (y=2)
+    |
+  1 | - - - - - - - - - - - - - - -  y = 1.0 (Target Line)
+    |
+    |   +---+ <--- top (y+l=1)
+  0 |   |SQ1|
+____+___+---+__________________________> x
+    |   0   1       2       3
 
 ---
 
