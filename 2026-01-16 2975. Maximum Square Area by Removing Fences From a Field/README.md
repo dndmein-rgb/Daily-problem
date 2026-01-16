@@ -1,16 +1,17 @@
 # 2975. Maximize Square Area by Removing Fences
 
+
+
 ## 📋 Problem Description
 **Difficulty**: Medium  
 **Pattern**: Geometry + Hashing  
 
-You are given a rectangular field of size `m x n`.
+There is a rectangular field of size `(m - 1) x (n - 1)` with corners at `(1, 1)` and `(m, n)` containing some horizontal and vertical fences given in arrays `hFences` and `vFences` respectively.
 
-Some horizontal and vertical fences are removed.  
-After removing fences, you can form rectangular regions.
+- Horizontal fences are from `(hFences[i], 1)` to `(hFences[i], n)`  
+- Vertical fences are from `(1, vFences[i])` to `(m, vFences[i])`  
 
-Your task is to find the **maximum possible square area** that can be formed.  
-If no square can be formed, return `-1`.
+Return the **maximum area of a square field** that can be formed by removing some fences (possibly none), or `-1` if it is impossible to make a square field.  
 
 The result should be returned modulo `1e9 + 7`.
 
