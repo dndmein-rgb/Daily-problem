@@ -7,7 +7,7 @@ For each element `nums[i]`, find the **smallest integer `j`** such that:
 j | (j + 1) == nums[i]
 
 If no such integer exists, return `-1` for that position.
-- **Leetcode Link:** [LeetCode 3314 – Minimum Bitwise Array](https://leetcode.com/problems/minimum-bitwise-array-i/)
+- **Leetcode Link:** [LeetCode 3314 – Minimum Bitwise Array](https://leetcode.com/problems/construct-the-minimum-bitwise-array-i)
 
 
 ---
