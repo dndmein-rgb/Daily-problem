@@ -1,7 +1,6 @@
 # 🔢 Minimum Bitwise Array (Part 1 & Part 2)
 
-- **Part 1:** [LeetCode 3314 – Minimum Bitwise Array](https://leetcode.com/problems/minimum-bitwise-array/)
-- **Part 2:** [LeetCode 3315 – Minimum Bitwise Array II](https://leetcode.com/problems/minimum-bitwise-array-ii/)
+- **Leetcode Link:** [LeetCode 3315 – Minimum Bitwise Array II](https://leetcode.com/problems/construct-the-minimum-bitwise-array-ii)
 
 ---
 
