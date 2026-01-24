@@ -1,4 +1,4 @@
-# 🔢 Minimum Bitwise Array (Part 1 & Part 2)
+# 🔢 Minimum Bitwise Array ii
 
 - **Leetcode Link:** [LeetCode 3315 – Minimum Bitwise Array II](https://leetcode.com/problems/construct-the-minimum-bitwise-array-ii)
 
