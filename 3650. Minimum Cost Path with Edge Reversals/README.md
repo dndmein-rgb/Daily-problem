@@ -31,10 +31,9 @@ edges = [[0,1,1],[1,2,2]]
 
 
 **Explanation**
-
-- 0 → 1 with cost 1
-- 1 → 2 with cost 2  
-Total minimum cost = 3
+- 0 → 1 costs 1  
+- 1 → 2 costs 2  
+Minimum total cost = 3
 
 ---
 
@@ -44,6 +43,16 @@ Total minimum cost = 3
 - `0 ≤ edges.length ≤ 2 × 10^5`
 - `0 ≤ u, v < n`
 - `1 ≤ w ≤ 10^6`
+
+---
+
+## 🏷️ Topics
+
+- Graph
+- Shortest Path
+- Dijkstra’s Algorithm
+- Priority Queue
+- Greedy
 
 ---
 
@@ -58,18 +67,13 @@ It is efficiently solved using **Dijkstra’s Algorithm**.
    - Add edge `u → v` with cost `w`
    - Add reversed edge `v → u` with cost `2w`
 2. Use a min-heap (priority queue) storing `(currentCost, node)`
-3. Maintain a `dist[]` array to track the minimum cost to reach each node
-4. Ignore stale entries from the priority queue
+3. Maintain a distance array `dist[]` where `dist[i]` is the minimum cost to reach node `i`
+4. Skip stale entries from the priority queue
 5. Stop early when node `n - 1` is reached
 
-### Complexity
+---
+
+## ⏱️ Complexity Analysis
 
 - **Time Complexity:** `O((n + m) log n)`
 - **Space Complexity:** `O(n + m)`
-
-### Paradigm
-
-- Graph
-- Dijkstra’s Algorithm
-- Greedy
-- Priority Queue
